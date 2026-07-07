@@ -56,10 +56,15 @@
 
     <section class="card">
       <h2>Teams</h2>
-      <div class="row">
-        <input id="teamInput" type="text" placeholder="Enter team name" />
+
+      <div class="team-form">
+        <input id="teamInput" type="text" placeholder="Team name" />
+        <input id="teamShortName" type="text" placeholder="Short name" />
+        <input id="teamLogo" type="url" placeholder="Logo URL optional" />
+        <input id="teamColour" type="color" value="#6d5dfc" />
         <button id="addTeam">Add Team</button>
       </div>
+
       <ul id="teamList"></ul>
     </section>
 
@@ -74,6 +79,10 @@
             <th>W</th>
             <th>D</th>
             <th>L</th>
+            <th>Bye</th>
+            <th>PF</th>
+            <th>PA</th>
+            <th>Diff</th>
           </tr>
         </thead>
         <tbody id="standingsBody"></tbody>
