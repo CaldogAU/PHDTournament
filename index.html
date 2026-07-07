@@ -71,7 +71,31 @@
           <dt>Scoring</dt>
           <dd id="summaryScoring">—</dd>
         </div>
+        <div>
+          <dt>Teams</dt>
+          <dd id="summaryTeams">0</dd>
+        </div>
       </dl>
+    </section>
+
+    <section class="card wide">
+      <div class="section-heading">
+        <div>
+          <h2>Teams</h2>
+          <p class="muted">Add competitors, colours, short names and optional logo URLs.</p>
+        </div>
+        <button id="clearTeamForm" class="secondary" type="button">Clear Form</button>
+      </div>
+
+      <div class="team-form">
+        <input id="teamName" type="text" placeholder="Team name" />
+        <input id="teamShortName" type="text" placeholder="Short name optional" />
+        <input id="teamLogoUrl" type="url" placeholder="Logo URL optional" />
+        <input id="teamColour" type="color" value="#6d5dfc" />
+        <button id="saveTeam" type="button">Add Team</button>
+      </div>
+
+      <ul id="teamList" class="team-list"></ul>
     </section>
   </main>
 

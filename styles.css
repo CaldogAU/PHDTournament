@@ -5,6 +5,7 @@
   --muted: #667085;
   --accent: #6d5dfc;
   --danger: #dc2626;
+  --secondary: #475467;
   --border: #d9deea;
 }
 
@@ -55,10 +56,12 @@ p {
   margin-bottom: 0;
 }
 
-.header-actions {
+.header-actions,
+.section-heading {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 #saveStatus {
@@ -88,6 +91,11 @@ button.danger,
   background: var(--danger);
 }
 
+button.secondary,
+.secondary {
+  background: var(--secondary);
+}
+
 .app-layout {
   padding: 24px;
   display: grid;
@@ -101,6 +109,10 @@ button.danger,
   border-radius: 18px;
   padding: 24px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+}
+
+.wide {
+  grid-column: 1 / -1;
 }
 
 .grid {
@@ -163,10 +175,83 @@ textarea {
 
 .muted {
   color: var(--muted);
+  margin-bottom: 0;
 }
 
-@media (max-width: 850px) {
-  .app-header {
+.team-form {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 1.4fr 90px auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.team-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.team-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.team-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 800;
+  background: var(--accent);
+  overflow: hidden;
+}
+
+.team-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-meta strong {
+  display: block;
+}
+
+.team-meta span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.team-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.small-button {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.empty-state {
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+@media (max-width: 950px) {
+  .app-header,
+  .section-heading {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -179,7 +264,16 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .grid.three {
+  .grid.three,
+  .team-form {
     grid-template-columns: 1fr;
+  }
+
+  .team-item {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .team-actions {
+    grid-column: 1 / -1;
   }
 }

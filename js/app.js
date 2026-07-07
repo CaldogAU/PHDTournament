@@ -26,11 +26,15 @@ function renderTournamentSummary() {
 
   document.getElementById("summaryScoring").textContent =
     `Win ${tournament.settings.winPoints}, Draw ${tournament.settings.drawPoints}, Bye ${tournament.settings.byePoints}`;
+
+  document.getElementById("summaryTeams").textContent =
+    PHDTournament.state.teams.length;
 }
 
 function render() {
   renderTournamentForm();
   renderTournamentSummary();
+  renderTeams();
 }
 
 function updateTournamentSettings() {
@@ -55,7 +59,7 @@ function updateTournamentSettings() {
   render();
 }
 
-function bindEvents() {
+function bindTournamentEvents() {
   document.getElementById("saveTournament")
     .addEventListener("click", updateTournamentSettings);
 
@@ -68,7 +72,38 @@ function bindEvents() {
   ].forEach(id => {
     document.getElementById(id).addEventListener("change", updateTournamentSettings);
   });
+}
 
+function bindTeamEvents() {
+  document.getElementById("saveTeam")
+    .addEventListener("click", saveTeamFromForm);
+
+  document.getElementById("clearTeamForm")
+    .addEventListener("click", clearTeamForm);
+
+  document.getElementById("teamName")
+    .addEventListener("keydown", event => {
+      if (event.key === "Enter") saveTeamFromForm();
+    });
+
+  document.getElementById("teamList")
+    .addEventListener("click", event => {
+      const teamId = event.target.dataset.teamId;
+
+      if (!teamId) return;
+
+      if (event.target.classList.contains("edit-team")) {
+        editTeam(teamId);
+        return;
+      }
+
+      if (event.target.classList.contains("delete-team")) {
+        deleteTeam(teamId);
+      }
+    });
+}
+
+function bindAppEvents() {
   document.getElementById("themeToggle")
     .addEventListener("click", () => {
       document.body.classList.toggle("dark");
@@ -80,13 +115,16 @@ function bindEvents() {
       if (!confirmed) return;
 
       resetState();
+      clearTeamForm();
       render();
     });
 }
 
 function initApp() {
   loadState();
-  bindEvents();
+  bindTournamentEvents();
+  bindTeamEvents();
+  bindAppEvents();
   render();
   setSaveStatus("Loaded");
 }

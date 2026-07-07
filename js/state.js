@@ -1,9 +1,10 @@
 const PHDTournament = {
   modules: [],
   storageKey: "phdTournamentState",
+  editingTeamId: null,
   defaultState: {
     appName: "PHDTournament",
-    version: "0.2.0",
+    version: "0.3.0",
     tournament: {
       name: "PHDlympics",
       description: "",
