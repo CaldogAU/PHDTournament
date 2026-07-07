@@ -37,6 +37,21 @@ body {
   align-items: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#saveStatus {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
 .eyebrow {
   text-transform: uppercase;
   font-size: 12px;
@@ -67,6 +82,12 @@ h1, h2, p {
   grid-column: 1 / -1;
 }
 
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
 label {
   display: grid;
   gap: 8px;
@@ -74,12 +95,19 @@ label {
   margin-bottom: 16px;
 }
 
-input {
+input,
+textarea {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 16px;
+  font-family: inherit;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
 }
 
 button {
@@ -94,6 +122,10 @@ button {
 
 button:hover {
   opacity: 0.9;
+}
+
+.danger {
+  background: var(--danger);
 }
 
 .row {
@@ -130,7 +162,7 @@ th, td {
   text-align: left;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
   .app-header {
     flex-direction: column;
     align-items: flex-start;
@@ -140,7 +172,9 @@ th, td {
     grid-template-columns: 1fr;
   }
 
+  .grid,
   .row {
+    grid-template-columns: 1fr;
     flex-direction: column;
   }
 }
