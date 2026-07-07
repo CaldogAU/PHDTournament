@@ -8,7 +8,8 @@ const defaultState = {
     drawPoints: 1,
     byePoints: 3
   },
-  teams: []
+  teams: [],
+  rounds: []
 };
 
 let state = structuredClone(defaultState);
@@ -32,6 +33,10 @@ const addTeamButton = document.getElementById("addTeam");
 const teamList = document.getElementById("teamList");
 const standingsBody = document.getElementById("standingsBody");
 const themeToggle = document.getElementById("themeToggle");
+
+const generateRoundButton = document.getElementById("generateRound");
+const roundStatus = document.getElementById("roundStatus");
+const roundsContainer = document.getElementById("roundsContainer");
 
 let editingTeamId = null;
 
@@ -64,7 +69,8 @@ function loadState() {
         ...defaultState.settings,
         ...(parsed.settings || {})
       },
-      teams: parsed.teams || []
+      teams: parsed.teams || [],
+      rounds: parsed.rounds || []
     };
   } catch {
     state = structuredClone(defaultState);
@@ -95,12 +101,43 @@ function getSortedTeams() {
   });
 }
 
+function getTeam(teamId) {
+  return state.teams.find(team => team.id === teamId);
+}
+
+function havePlayed(teamAId, teamBId) {
+  return state.rounds.some(round =>
+    round.matches.some(match =>
+      !match.bye &&
+      (
+        (match.teamAId === teamAId && match.teamBId === teamBId) ||
+        (match.teamAId === teamBId && match.teamBId === teamAId)
+      )
+    )
+  );
+}
+
 function renderTeamLogo(team) {
+  if (!team) return "";
+
   if (team.logoUrl) {
     return `<img src="${team.logoUrl}" alt="${team.name} logo" onerror="this.remove()" />`;
   }
 
   return getInitials(team.shortName || team.name);
+}
+
+function renderMiniTeam(teamId) {
+  const team = getTeam(teamId);
+
+  if (!team) return `<span>Unknown team</span>`;
+
+  return `
+    <span class="team-logo" style="background:${team.colour || "#6d5dfc"}">
+      ${renderTeamLogo(team)}
+    </span>
+    <strong>${team.shortName || team.name}</strong>
+  `;
 }
 
 function render() {
@@ -112,6 +149,12 @@ function render() {
   drawPointsInput.value = state.settings.drawPoints;
   byePointsInput.value = state.settings.byePoints;
 
+  renderTeams();
+  renderRounds();
+  renderStandings();
+}
+
+function renderTeams() {
   teamList.innerHTML = "";
 
   if (state.teams.length === 0) {
@@ -141,7 +184,53 @@ function render() {
 
     teamList.appendChild(li);
   });
+}
 
+function renderRounds() {
+  roundsContainer.innerHTML = "";
+
+  if (state.rounds.length === 0) {
+    roundStatus.textContent = "No rounds generated yet.";
+    roundsContainer.innerHTML = `<p class="muted">Generate your first round once teams have been added.</p>`;
+    return;
+  }
+
+  roundStatus.textContent = `${state.rounds.length} round${state.rounds.length === 1 ? "" : "s"} generated.`;
+
+  state.rounds.forEach(round => {
+    const card = document.createElement("article");
+    card.className = "round-card";
+
+    const matches = round.matches.map(match => {
+      if (match.bye) {
+        return `
+          <div class="match-card bye-card">
+            <div class="match-team">${renderMiniTeam(match.teamAId)}</div>
+            <div class="vs">BYE</div>
+            <div><span class="badge">Automatic bye</span></div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="match-card">
+          <div class="match-team">${renderMiniTeam(match.teamAId)}</div>
+          <div class="vs">VS</div>
+          <div class="match-team">${renderMiniTeam(match.teamBId)}</div>
+        </div>
+      `;
+    }).join("");
+
+    card.innerHTML = `
+      <h3>Round ${round.number}</h3>
+      <div class="match-grid">${matches}</div>
+    `;
+
+    roundsContainer.appendChild(card);
+  });
+}
+
+function renderStandings() {
   standingsBody.innerHTML = "";
 
   getSortedTeams().forEach((team, index) => {
@@ -247,6 +336,99 @@ function editTeam(teamId) {
   addTeamButton.textContent = "Save Team";
 }
 
+function chooseByeTeam(teams) {
+  const sorted = [...teams].sort((a, b) => {
+    return (
+      (a.byes || 0) - (b.byes || 0) ||
+      (a.points || 0) - (b.points || 0) ||
+      a.name.localeCompare(b.name)
+    );
+  });
+
+  return sorted[0];
+}
+
+function createSwissPairings() {
+  if (state.teams.length < 2) {
+    alert("Add at least two teams before generating a round.");
+    return null;
+  }
+
+  const roundNumber = state.rounds.length + 1;
+  const availableTeams = getSortedTeams().map(team => ({ ...team }));
+  const matches = [];
+
+  if (availableTeams.length % 2 === 1) {
+    const byeTeam = chooseByeTeam(availableTeams);
+    matches.push({
+      id: crypto.randomUUID(),
+      roundNumber,
+      teamAId: byeTeam.id,
+      teamBId: null,
+      bye: true,
+      completed: true
+    });
+
+    const originalTeam = getTeam(byeTeam.id);
+    originalTeam.byes = (originalTeam.byes || 0) + 1;
+    originalTeam.points = (originalTeam.points || 0) + state.settings.byePoints;
+
+    const byeIndex = availableTeams.findIndex(team => team.id === byeTeam.id);
+    availableTeams.splice(byeIndex, 1);
+  }
+
+  const unpaired = [...availableTeams];
+
+  while (unpaired.length > 0) {
+    const teamA = unpaired.shift();
+
+    let opponentIndex = unpaired.findIndex(teamB => !havePlayed(teamA.id, teamB.id));
+
+    if (opponentIndex === -1) {
+      opponentIndex = 0;
+    }
+
+    const teamB = unpaired.splice(opponentIndex, 1)[0];
+
+    matches.push({
+      id: crypto.randomUUID(),
+      roundNumber,
+      teamAId: teamA.id,
+      teamBId: teamB.id,
+      bye: false,
+      completed: false,
+      scoreA: null,
+      scoreB: null,
+      winnerId: null
+    });
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    number: roundNumber,
+    completed: false,
+    matches
+  };
+}
+
+function generateRound() {
+  const currentRound = state.rounds[state.rounds.length - 1];
+
+  if (currentRound && !currentRound.completed) {
+    const confirmed = confirm("The current round is not completed yet. Generate another round anyway?");
+
+    if (!confirmed) return;
+  }
+
+  const round = createSwissPairings();
+
+  if (!round) return;
+
+  state.rounds.push(round);
+  autosave();
+  render();
+}
+
 saveTournamentButton.addEventListener("click", updateTournamentSettings);
 
 [
@@ -292,6 +474,8 @@ teamList.addEventListener("click", (event) => {
     render();
   }
 });
+
+generateRoundButton.addEventListener("click", generateRound);
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark");
