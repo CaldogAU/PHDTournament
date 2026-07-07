@@ -86,11 +86,77 @@ function getInitials(name) {
     .join("");
 }
 
+function createEmptyTeamStats(team) {
+  return {
+    ...team,
+    points: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    byes: 0,
+    pointsFor: 0,
+    pointsAgainst: 0
+  };
+}
+
+function recalculateStandings() {
+  const stats = new Map();
+
+  state.teams.forEach(team => {
+    stats.set(team.id, createEmptyTeamStats(team));
+  });
+
+  state.rounds.forEach(round => {
+    round.matches.forEach(match => {
+      const teamA = stats.get(match.teamAId);
+      const teamB = stats.get(match.teamBId);
+
+      if (match.bye && teamA) {
+        teamA.byes += 1;
+        teamA.points += state.settings.byePoints;
+        return;
+      }
+
+      if (!match.completed || !teamA || !teamB) return;
+
+      const scoreA = Number(match.scoreA);
+      const scoreB = Number(match.scoreB);
+
+      teamA.pointsFor += scoreA;
+      teamA.pointsAgainst += scoreB;
+      teamB.pointsFor += scoreB;
+      teamB.pointsAgainst += scoreA;
+
+      if (scoreA > scoreB) {
+        teamA.wins += 1;
+        teamB.losses += 1;
+        teamA.points += state.settings.winPoints;
+      } else if (scoreB > scoreA) {
+        teamB.wins += 1;
+        teamA.losses += 1;
+        teamB.points += state.settings.winPoints;
+      } else {
+        teamA.draws += 1;
+        teamB.draws += 1;
+        teamA.points += state.settings.drawPoints;
+        teamB.points += state.settings.drawPoints;
+      }
+    });
+  });
+
+  state.teams = state.teams.map(team => {
+    const updated = stats.get(team.id);
+    return updated || createEmptyTeamStats(team);
+  });
+}
+
 function getScoreDifference(team) {
   return (team.pointsFor || 0) - (team.pointsAgainst || 0);
 }
 
 function getSortedTeams() {
+  recalculateStandings();
+
   return [...state.teams].sort((a, b) => {
     return (
       (b.points || 0) - (a.points || 0) ||
@@ -109,6 +175,7 @@ function havePlayed(teamAId, teamBId) {
   return state.rounds.some(round =>
     round.matches.some(match =>
       !match.bye &&
+      match.completed &&
       (
         (match.teamAId === teamAId && match.teamBId === teamBId) ||
         (match.teamAId === teamBId && match.teamBId === teamAId)
@@ -141,6 +208,8 @@ function renderMiniTeam(teamId) {
 }
 
 function render() {
+  recalculateStandings();
+
   pageTitle.textContent = state.tournamentName || "Tournament Manager";
 
   tournamentNameInput.value = state.tournamentName;
@@ -195,11 +264,12 @@ function renderRounds() {
     return;
   }
 
-  roundStatus.textContent = `${state.rounds.length} round${state.rounds.length === 1 ? "" : "s"} generated.`;
+  const completedRounds = state.rounds.filter(round => round.completed).length;
+  roundStatus.textContent = `${completedRounds} of ${state.rounds.length} rounds completed.`;
 
   state.rounds.forEach(round => {
     const card = document.createElement("article");
-    card.className = "round-card";
+    card.className = `round-card ${round.completed ? "completed" : ""}`;
 
     const matches = round.matches.map(match => {
       if (match.bye) {
@@ -207,22 +277,47 @@ function renderRounds() {
           <div class="match-card bye-card">
             <div class="match-team">${renderMiniTeam(match.teamAId)}</div>
             <div class="vs">BYE</div>
-            <div><span class="badge">Automatic bye</span></div>
+            <div><span class="badge done">Bye awarded</span></div>
           </div>
         `;
       }
 
       return `
-        <div class="match-card">
+        <div class="match-card" data-match-id="${match.id}" data-round-id="${round.id}">
           <div class="match-team">${renderMiniTeam(match.teamAId)}</div>
-          <div class="vs">VS</div>
+
+          <div class="score-entry">
+            <input class="score-a" type="number" min="0" value="${match.scoreA ?? ""}" placeholder="0" />
+            <span>–</span>
+            <input class="score-b" type="number" min="0" value="${match.scoreB ?? ""}" placeholder="0" />
+          </div>
+
           <div class="match-team">${renderMiniTeam(match.teamBId)}</div>
+
+          <div class="match-actions">
+            <button class="small-btn success save-match" data-round-id="${round.id}" data-match-id="${match.id}">
+              Save
+            </button>
+            <button class="small-btn secondary clear-match" data-round-id="${round.id}" data-match-id="${match.id}">
+              Clear
+            </button>
+          </div>
         </div>
       `;
     }).join("");
 
     card.innerHTML = `
-      <h3>Round ${round.number}</h3>
+      <div class="round-title-row">
+        <div>
+          <h3>Round ${round.number}</h3>
+          <span class="badge ${round.completed ? "done" : ""}">
+            ${round.completed ? "Completed" : "In progress"}
+          </span>
+        </div>
+        <button class="small-btn ${round.completed ? "warning" : "success"} toggle-round" data-round-id="${round.id}">
+          ${round.completed ? "Reopen Round" : "Complete Round"}
+        </button>
+      </div>
       <div class="match-grid">${matches}</div>
     `;
 
@@ -354,12 +449,15 @@ function createSwissPairings() {
     return null;
   }
 
+  recalculateStandings();
+
   const roundNumber = state.rounds.length + 1;
   const availableTeams = getSortedTeams().map(team => ({ ...team }));
   const matches = [];
 
   if (availableTeams.length % 2 === 1) {
     const byeTeam = chooseByeTeam(availableTeams);
+
     matches.push({
       id: crypto.randomUUID(),
       roundNumber,
@@ -368,10 +466,6 @@ function createSwissPairings() {
       bye: true,
       completed: true
     });
-
-    const originalTeam = getTeam(byeTeam.id);
-    originalTeam.byes = (originalTeam.byes || 0) + 1;
-    originalTeam.points = (originalTeam.points || 0) + state.settings.byePoints;
 
     const byeIndex = availableTeams.findIndex(team => team.id === byeTeam.id);
     availableTeams.splice(byeIndex, 1);
@@ -415,9 +509,8 @@ function generateRound() {
   const currentRound = state.rounds[state.rounds.length - 1];
 
   if (currentRound && !currentRound.completed) {
-    const confirmed = confirm("The current round is not completed yet. Generate another round anyway?");
-
-    if (!confirmed) return;
+    alert("Complete the current round before generating the next one.");
+    return;
   }
 
   const round = createSwissPairings();
@@ -425,6 +518,82 @@ function generateRound() {
   if (!round) return;
 
   state.rounds.push(round);
+  autosave();
+  render();
+}
+
+function findRoundAndMatch(roundId, matchId) {
+  const round = state.rounds.find(item => item.id === roundId);
+
+  if (!round) return { round: null, match: null };
+
+  const match = round.matches.find(item => item.id === matchId);
+
+  return { round, match };
+}
+
+function saveMatch(roundId, matchId, matchCard) {
+  const { match } = findRoundAndMatch(roundId, matchId);
+
+  if (!match || match.bye) return;
+
+  const scoreAInput = matchCard.querySelector(".score-a");
+  const scoreBInput = matchCard.querySelector(".score-b");
+
+  const scoreA = Number(scoreAInput.value);
+  const scoreB = Number(scoreBInput.value);
+
+  if (Number.isNaN(scoreA) || Number.isNaN(scoreB) || scoreA < 0 || scoreB < 0) {
+    alert("Enter valid non-negative scores.");
+    return;
+  }
+
+  match.scoreA = scoreA;
+  match.scoreB = scoreB;
+  match.completed = true;
+
+  if (scoreA > scoreB) {
+    match.winnerId = match.teamAId;
+  } else if (scoreB > scoreA) {
+    match.winnerId = match.teamBId;
+  } else {
+    match.winnerId = null;
+  }
+
+  recalculateStandings();
+  autosave();
+  render();
+}
+
+function clearMatch(roundId, matchId) {
+  const { match } = findRoundAndMatch(roundId, matchId);
+
+  if (!match || match.bye) return;
+
+  match.scoreA = null;
+  match.scoreB = null;
+  match.completed = false;
+  match.winnerId = null;
+
+  recalculateStandings();
+  autosave();
+  render();
+}
+
+function toggleRoundCompleted(roundId) {
+  const round = state.rounds.find(item => item.id === roundId);
+
+  if (!round) return;
+
+  const incompleteMatches = round.matches.filter(match => !match.bye && !match.completed);
+
+  if (!round.completed && incompleteMatches.length > 0) {
+    alert("Complete every match in this round first.");
+    return;
+  }
+
+  round.completed = !round.completed;
+
   autosave();
   render();
 }
@@ -476,6 +645,26 @@ teamList.addEventListener("click", (event) => {
 });
 
 generateRoundButton.addEventListener("click", generateRound);
+
+roundsContainer.addEventListener("click", (event) => {
+  const roundId = event.target.dataset.roundId;
+  const matchId = event.target.dataset.matchId;
+
+  if (event.target.classList.contains("save-match")) {
+    const matchCard = event.target.closest(".match-card");
+    saveMatch(roundId, matchId, matchCard);
+    return;
+  }
+
+  if (event.target.classList.contains("clear-match")) {
+    clearMatch(roundId, matchId);
+    return;
+  }
+
+  if (event.target.classList.contains("toggle-round")) {
+    toggleRoundCompleted(roundId);
+  }
+});
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark");
