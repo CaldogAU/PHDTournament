@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PHD Tournament Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">PHDTournament</p>
+      <h1>Tournament Manager</h1>
+      <p>Create teams, generate rounds, enter scores, and track standings.</p>
+    </div>
+    <button id="themeToggle">Toggle Theme</button>
+  </header>
+
+  <main class="dashboard">
+    <section class="card">
+      <h2>Tournament Setup</h2>
+      <label>
+        Tournament Name
+        <input id="tournamentName" type="text" value="PHDlympics" />
+      </label>
+      <button id="saveTournament">Save Tournament</button>
+    </section>
+
+    <section class="card">
+      <h2>Teams</h2>
+      <div class="row">
+        <input id="teamInput" type="text" placeholder="Enter team name" />
+        <button id="addTeam">Add Team</button>
+      </div>
+      <ul id="teamList"></ul>
+    </section>
+
+    <section class="card wide">
+      <h2>Standings</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Pts</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+          </tr>
+        </thead>
+        <tbody id="standingsBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
