@@ -29,12 +29,16 @@ function renderTournamentSummary() {
 
   document.getElementById("summaryTeams").textContent =
     PHDTournament.state.teams.length;
+
+  document.getElementById("summaryRounds").textContent =
+    PHDTournament.state.rounds.length;
 }
 
 function render() {
   renderTournamentForm();
   renderTournamentSummary();
   renderTeams();
+  renderRounds();
   renderStandings();
 }
 
@@ -104,6 +108,11 @@ function bindTeamEvents() {
     });
 }
 
+function bindRoundEvents() {
+  document.getElementById("generateRound")
+    .addEventListener("click", generateRound);
+}
+
 function bindAppEvents() {
   document.getElementById("themeToggle")
     .addEventListener("click", () => {
@@ -125,6 +134,7 @@ function initApp() {
   loadState();
   bindTournamentEvents();
   bindTeamEvents();
+  bindRoundEvents();
   bindAppEvents();
   render();
   setSaveStatus("Loaded");

@@ -75,6 +75,10 @@
           <dt>Teams</dt>
           <dd id="summaryTeams">0</dd>
         </div>
+        <div>
+          <dt>Rounds</dt>
+          <dd id="summaryRounds">0</dd>
+        </div>
       </dl>
     </section>
 
@@ -101,8 +105,20 @@
     <section class="card wide">
       <div class="section-heading">
         <div>
+          <h2>Rounds</h2>
+          <p id="roundStatus" class="muted">No rounds generated yet.</p>
+        </div>
+        <button id="generateRound" type="button">Generate Next Round</button>
+      </div>
+
+      <div id="roundsContainer" class="rounds-container"></div>
+    </section>
+
+    <section class="card wide">
+      <div class="section-heading">
+        <div>
           <h2>Standings</h2>
-          <p class="muted">The ladder currently reflects team records and will update with match results in later packages.</p>
+          <p class="muted">The ladder updates as byes and future match results are recorded.</p>
         </div>
       </div>
 
