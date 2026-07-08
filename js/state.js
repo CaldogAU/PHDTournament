@@ -3,9 +3,10 @@ const PHDTournament = {
   storageKey: "phdTournamentState",
   themeKey: "phdTournamentTheme",
   editingTeamId: null,
+  editingGameId: null,
   defaultState: {
     appName: "PHDTournament",
-    version: "1.0.0",
+    version: "1.1.0",
     tournament: {
       name: "PHDlympics",
       description: "",
@@ -19,6 +20,7 @@ const PHDTournament = {
       }
     },
     teams: [],
+    games: [],
     rounds: []
   },
   state: null
