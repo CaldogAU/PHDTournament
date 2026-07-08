@@ -152,9 +152,10 @@ function bindAppEvents() {
     });
   document.getElementById("exportJson")
     .addEventListener("click", exportTournamentJson);
-
   document.getElementById("importJson")
     .addEventListener("change", importTournamentJson);
+  document.getElementById("printReport")
+  .addEventListener("click", printTournamentReport);
 }
 
 function initApp() {

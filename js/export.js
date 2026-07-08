@@ -87,4 +87,10 @@ function importTournamentJson(event) {
   reader.readAsText(file);
 }
 
+function printTournamentReport() {
+  setSaveStatus("Printing...");
+  window.print();
+  setSaveStatus("Ready");
+}
+
 PHDTournament.modules.push("export");

@@ -491,3 +491,52 @@ th {
     grid-column: 1 / -1;
   }
 }
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .app-header,
+  .team-form,
+  .header-actions,
+  .section-heading button,
+  .button-row,
+  .team-actions,
+  .match-actions,
+  #clearTeamForm,
+  #generateRound {
+    display: none !important;
+  }
+
+  .app-layout {
+    display: block;
+    padding: 0;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin-bottom: 18px;
+    page-break-inside: avoid;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+
+  table {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 6px;
+  }
+
+  .round-card {
+    page-break-inside: avoid;
+  }
+}
