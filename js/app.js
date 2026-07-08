@@ -72,16 +72,17 @@ function updateTournamentSettings() {
 function bindTournamentEvents() {
   bindClick("saveTournament", updateTournamentSettings);
 
-  [
-    "tournamentName",
-    "tournamentDescription",
-    "TournamentLogoUrl",
-    "tournamentBannerUrl",
-    "tournamentAccentColour",
-    "winPoints",
-    "drawPoints",
-    "byePoints"
-  ].forEach(id => {
+[
+  "tournamentName",
+  "tournamentDescription",
+  "tournamentLogoUrl",
+  "tournamentBannerUrl",
+  "tournamentAccentColour",
+  "winPoints",
+  "drawPoints",
+  "byePoints"
+]
+  .forEach(id => {
     bindChange(id, updateTournamentSettings);
   });
 }
