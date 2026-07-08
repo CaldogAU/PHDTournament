@@ -18,15 +18,92 @@ function teamsHavePlayed(teamAId, teamBId) {
   return getPlayedPairs().has(pair);
 }
 
+function getByeCounts() {
+  const counts = new Map();
+
+  PHDTournament.state.teams.forEach(team => {
+    counts.set(team.id, 0);
+  });
+
+  PHDTournament.state.rounds.forEach(round => {
+    round.matches.forEach(match => {
+      if (!match.bye) return;
+
+      counts.set(match.teamAId, (counts.get(match.teamAId) || 0) + 1);
+    });
+  });
+
+  return counts;
+}
+
 function chooseByeTeam(standings) {
-  return [...standings].sort((a, b) => {
+  const byeCounts = getByeCounts();
+
+  const neverHadBye = standings.filter(team =>
+    (byeCounts.get(team.id) || 0) === 0
+  );
+
+  const candidates = neverHadBye.length > 0 ? neverHadBye : standings;
+
+  return [...candidates].sort((a, b) => {
     return (
-      a.byes - b.byes ||
       a.points - b.points ||
       getScoreDifference(a) - getScoreDifference(b) ||
+      a.pointsFor - b.pointsFor ||
       a.name.localeCompare(b.name)
     );
   })[0];
+}
+
+function groupStandingsByPoints(standings) {
+  const groups = new Map();
+
+  standings.forEach(team => {
+    const key = team.points || 0;
+
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+
+    groups.get(key).push(team);
+  });
+
+  return [...groups.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([, teams]) => teams);
+}
+
+function findBestOpponentIndex(teamA, candidates) {
+  const freshOpponentIndex = candidates.findIndex(teamB =>
+    !teamsHavePlayed(teamA.id, teamB.id)
+  );
+
+  if (freshOpponentIndex !== -1) {
+    return freshOpponentIndex;
+  }
+
+  return 0;
+}
+
+function pairWithinGroup(group, carryOver = null) {
+  const matches = [];
+  const teams = carryOver ? [carryOver, ...group] : [...group];
+
+  while (teams.length >= 2) {
+    const teamA = teams.shift();
+    const opponentIndex = findBestOpponentIndex(teamA, teams);
+    const teamB = teams.splice(opponentIndex, 1)[0];
+
+    matches.push({
+      teamA,
+      teamB
+    });
+  }
+
+  return {
+    matches,
+    carryOver: teams[0] || null
+  };
 }
 
 function createSwissPairings() {
@@ -39,11 +116,12 @@ function createSwissPairings() {
 
   const roundNumber = PHDTournament.state.rounds.length + 1;
   const standings = getStandings();
-  const available = [...standings];
   const matches = [];
 
-  if (available.length % 2 === 1) {
-    const byeTeam = chooseByeTeam(available);
+  let workingStandings = [...standings];
+
+  if (workingStandings.length % 2 === 1) {
+    const byeTeam = chooseByeTeam(workingStandings);
 
     matches.push({
       id: crypto.randomUUID(),
@@ -57,38 +135,61 @@ function createSwissPairings() {
       winnerId: byeTeam.id
     });
 
-    available.splice(
-      available.findIndex(team => team.id === byeTeam.id),
-      1
-    );
+    workingStandings = workingStandings.filter(team => team.id !== byeTeam.id);
   }
 
-  const unpaired = [...available];
+  const pointGroups = groupStandingsByPoints(workingStandings);
+  let carryOver = null;
 
-  while (unpaired.length > 0) {
-    const teamA = unpaired.shift();
+  pointGroups.forEach(group => {
+    const result = pairWithinGroup(group, carryOver);
 
-    let opponentIndex = unpaired.findIndex(teamB =>
-      !teamsHavePlayed(teamA.id, teamB.id)
+    result.matches.forEach(pair => {
+      matches.push({
+        id: crypto.randomUUID(),
+        roundNumber,
+        teamAId: pair.teamA.id,
+        teamBId: pair.teamB.id,
+        bye: false,
+        completed: false,
+        scoreA: null,
+        scoreB: null,
+        winnerId: null
+      });
+    });
+
+    carryOver = result.carryOver;
+  });
+
+  if (carryOver) {
+    const alreadyPairedTeamIds = new Set(
+      matches
+        .filter(match => !match.bye)
+        .flatMap(match => [match.teamAId, match.teamBId])
     );
 
-    if (opponentIndex === -1) {
-      opponentIndex = 0;
+    const candidateMatch = matches.find(match =>
+      !match.bye &&
+      !teamsHavePlayed(carryOver.id, match.teamAId) &&
+      !alreadyPairedTeamIds.has(carryOver.id)
+    );
+
+    if (candidateMatch) {
+      const displacedTeamId = candidateMatch.teamAId;
+      candidateMatch.teamAId = carryOver.id;
+
+      matches.push({
+        id: crypto.randomUUID(),
+        roundNumber,
+        teamAId: displacedTeamId,
+        teamBId: candidateMatch.teamBId,
+        bye: false,
+        completed: false,
+        scoreA: null,
+        scoreB: null,
+        winnerId: null
+      });
     }
-
-    const teamB = unpaired.splice(opponentIndex, 1)[0];
-
-    matches.push({
-      id: crypto.randomUUID(),
-      roundNumber,
-      teamAId: teamA.id,
-      teamBId: teamB.id,
-      bye: false,
-      completed: false,
-      scoreA: null,
-      scoreB: null,
-      winnerId: null
-    });
   }
 
   return {
