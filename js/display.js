@@ -67,18 +67,19 @@ function renderDisplayMode() {
 function toggleDisplayMode(forceOff = false) {
   if (forceOff) {
     document.body.classList.remove("display-active");
-  } else {
-    document.body.classList.toggle("display-active");
+    setSaveStatus("Loaded");
+    return;
   }
 
-  const isActive = document.body.classList.contains("display-active");
+  document.body.classList.toggle("display-active");
 
-  if (isActive) {
+  if (document.body.classList.contains("display-active")) {
     renderDisplayMode();
     setSaveStatus("Display mode");
-  } else {
-    setSaveStatus("Loaded");
+    return;
   }
+
+  setSaveStatus("Loaded");
 }
 
 document.addEventListener("keydown", event => {

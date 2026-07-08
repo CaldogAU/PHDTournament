@@ -76,9 +76,10 @@ function render() {
   renderStandings();
   renderMatchHistory();
   renderReportPreview();
+
   if (document.body.classList.contains("display-active")) {
-  renderDisplayMode();
-}
+    renderDisplayMode();
+  }
 }
 
 function updateTournamentSettings() {
