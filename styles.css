@@ -148,6 +148,39 @@ button.warning,
   background: var(--warning);
 }
 
+.tab-nav {
+  display: flex;
+  gap: 10px;
+  padding: 14px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.tab-button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 18px;
+}
+
+.tab-button.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
 .button-row {
   display: flex;
   gap: 12px;
@@ -614,7 +647,8 @@ th {
 
 body.display-active .app-header,
 body.display-active .brand-banner,
-body.display-active .app-layout,
+body.display-active .tab-nav,
+body.display-active main,
 body.display-active .app-footer {
   display: none;
 }
@@ -870,8 +904,17 @@ body.display-active .display-mode {
   }
 
   .button-row,
-  .header-actions {
+  .header-actions,
+  .tab-nav {
     width: 100%;
+  }
+
+  .tab-nav {
+    padding: 12px 16px;
+  }
+
+  .tab-button {
+    flex: 1;
   }
 
   .button-row button,
@@ -889,6 +932,7 @@ body.display-active .display-mode {
   }
 
   .app-header,
+  .tab-nav,
   .team-form,
   .game-form,
   .header-actions,
@@ -903,6 +947,10 @@ body.display-active .display-mode {
   .app-footer,
   .activity-ticker {
     display: none !important;
+  }
+
+  .tab-panel {
+    display: block !important;
   }
 
   .app-layout {

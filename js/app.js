@@ -120,6 +120,43 @@ function updateTournamentSettings() {
   render();
 }
 
+function switchTab(tabName) {
+  const tabButtons = document.querySelectorAll(".tab-button");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+
+  tabButtons.forEach(button => {
+    const isActive = button.dataset.tab === tabName;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  tabPanels.forEach(panel => {
+    const expectedId = `${tabName}Tab`;
+    panel.classList.toggle("active", panel.id === expectedId);
+  });
+
+  localStorage.setItem("phdTournamentActiveTab", tabName);
+}
+
+function loadActiveTab() {
+  const savedTab = localStorage.getItem("phdTournamentActiveTab") || "home";
+  switchTab(savedTab);
+}
+
+function bindTabEvents() {
+  const tabNav = document.querySelector(".tab-nav");
+
+  if (!tabNav) return;
+
+  tabNav.addEventListener("click", event => {
+    const button = event.target.closest(".tab-button");
+
+    if (!button) return;
+
+    switchTab(button.dataset.tab);
+  });
+}
+
 function bindTournamentEvents() {
   bindClick("saveTournament", updateTournamentSettings);
 
@@ -282,6 +319,7 @@ function bindAppEvents() {
     clearGameForm();
     clearTeamForm();
     render();
+    switchTab("home");
   });
 }
 
@@ -290,6 +328,7 @@ function initApp() {
   loadState();
   ensureStateShape();
 
+  bindTabEvents();
   bindTournamentEvents();
   bindGameEvents();
   bindTeamEvents();
@@ -298,6 +337,7 @@ function initApp() {
   bindAppEvents();
 
   render();
+  loadActiveTab();
   setSaveStatus("Loaded");
 }
 
