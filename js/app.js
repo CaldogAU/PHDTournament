@@ -141,13 +141,14 @@ function bindRoundEvents() {
     });
 }
 
-document.getElementById("themeToggle")
-  .addEventListener("click", () => {
-    document.body.classList.toggle("dark");
+function bindAppEvents() {
+  document.getElementById("themeToggle")
+    .addEventListener("click", () => {
+      document.body.classList.toggle("dark");
 
-    const theme = document.body.classList.contains("dark") ? "dark" : "light";
-    saveThemePreference(theme);
-  });
+      const theme = document.body.classList.contains("dark") ? "dark" : "light";
+      saveThemePreference(theme);
+    });
 
   document.getElementById("resetTournament")
     .addEventListener("click", () => {
@@ -158,12 +159,15 @@ document.getElementById("themeToggle")
       clearTeamForm();
       render();
     });
+
   document.getElementById("exportJson")
     .addEventListener("click", exportTournamentJson);
+
   document.getElementById("importJson")
     .addEventListener("change", importTournamentJson);
+
   document.getElementById("printReport")
-  .addEventListener("click", printTournamentReport);
+    .addEventListener("click", printTournamentReport);
 }
 
 function initApp() {
