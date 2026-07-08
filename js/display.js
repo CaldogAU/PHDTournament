@@ -4,7 +4,6 @@ function getCurrentRound() {
 
 function renderDisplayMode() {
   const container = getElement("displayMode");
-
   if (!container) return;
 
   const tournament = getTournament();
@@ -13,42 +12,43 @@ function renderDisplayMode() {
 
   const standingsHtml = standings.length
     ? standings.map((team, index) => `
-        <div class="display-row">
-          <span>${index + 1}</span>
-          <strong>${escapeHtml(team.shortName || team.name)}</strong>
-          <span>${team.points} pts</span>
-        </div>
-      `).join("")
-    : `<p class="muted">No standings yet.</p>`;
+      <div class="display-row">
+        <span>${index + 1}</span>
+        <strong>${escapeHtml(team.shortName || team.name)}</strong>
+        <span>${team.points} pts</span>
+      </div>
+    `).join("")
+    : `<p>No standings yet.</p>`;
 
   const matchesHtml = currentRound
     ? currentRound.matches.map(match => {
-        const teamA = getTeamById(match.teamAId);
-        const teamB = getTeamById(match.teamBId);
+      const teamA = getTeamById(match.teamAId);
+      const teamB = getTeamById(match.teamBId);
 
-        if (match.bye) {
-          return `
-            <div class="display-match">
-              <strong>${escapeHtml(teamA ? teamA.name : "Unknown")}</strong>
-              <span>BYE</span>
-            </div>
-          `;
-        }
-
+      if (match.bye) {
         return `
           <div class="display-match">
             <strong>${escapeHtml(teamA ? teamA.name : "Unknown")}</strong>
-            <span>${match.completed ? `${match.scoreA} - ${match.scoreB}` : "vs"}</span>
-            <strong>${escapeHtml(teamB ? teamB.name : "Unknown")}</strong>
+            <span>BYE</span>
+            <span></span>
           </div>
         `;
-      }).join("")
-    : `<p class="muted">No current round.</p>`;
+      }
+
+      return `
+        <div class="display-match">
+          <strong>${escapeHtml(teamA ? teamA.name : "Unknown")}</strong>
+          <span>${match.completed ? `${match.scoreA} - ${match.scoreB}` : "vs"}</span>
+          <strong>${escapeHtml(teamB ? teamB.name : "Unknown")}</strong>
+        </div>
+      `;
+    }).join("")
+    : `<p>No current round.</p>`;
 
   container.innerHTML = `
     <section class="display-hero">
       <p class="eyebrow">Public Display</p>
-      <h2>${escapeHtml(tournament.name)}</h2>
+      <h2>${escapeHtml(tournament.name || "Tournament")}</h2>
       <p>${escapeHtml(tournament.description || "Live tournament dashboard")}</p>
     </section>
 
@@ -64,9 +64,19 @@ function renderDisplayMode() {
   `;
 }
 
+function setDisplayButtonLabel() {
+  const button = getElement("displayModeToggle");
+  if (!button) return;
+
+  button.textContent = document.body.classList.contains("display-active")
+    ? "Exit Display Mode"
+    : "Display Mode";
+}
+
 function toggleDisplayMode(forceOff = false) {
   if (forceOff) {
     document.body.classList.remove("display-active");
+    setDisplayButtonLabel();
     setSaveStatus("Loaded");
     return;
   }
@@ -76,15 +86,15 @@ function toggleDisplayMode(forceOff = false) {
   if (document.body.classList.contains("display-active")) {
     renderDisplayMode();
     setSaveStatus("Display mode");
-    return;
+  } else {
+    setSaveStatus("Loaded");
   }
 
-  setSaveStatus("Loaded");
+  setDisplayButtonLabel();
 }
 
 document.addEventListener("keydown", event => {
   if (event.key !== "Escape") return;
-
   if (!document.body.classList.contains("display-active")) return;
 
   event.preventDefault();
