@@ -117,6 +117,100 @@ function generateRound() {
   render();
 }
 
+function getRoundById(roundId) {
+  return PHDTournament.state.rounds.find(round => round.id === roundId);
+}
+
+function getMatch(roundId, matchId) {
+  const round = getRoundById(roundId);
+
+  if (!round) return null;
+
+  return round.matches.find(match => match.id === matchId);
+}
+
+function saveMatchScore(roundId, matchId, matchElement) {
+  const match = getMatch(roundId, matchId);
+
+  if (!match || match.bye) return;
+
+  const scoreAInput = matchElement.querySelector(".score-a");
+  const scoreBInput = matchElement.querySelector(".score-b");
+
+  const scoreA = Number(scoreAInput.value);
+  const scoreB = Number(scoreBInput.value);
+
+  if (
+    Number.isNaN(scoreA) ||
+    Number.isNaN(scoreB) ||
+    scoreA < 0 ||
+    scoreB < 0
+  ) {
+    alert("Enter valid non-negative scores.");
+    return;
+  }
+
+  match.scoreA = scoreA;
+  match.scoreB = scoreB;
+  match.completed = true;
+
+  if (scoreA > scoreB) {
+    match.winnerId = match.teamAId;
+  } else if (scoreB > scoreA) {
+    match.winnerId = match.teamBId;
+  } else {
+    match.winnerId = null;
+  }
+
+  autosave();
+  render();
+}
+
+function clearMatchScore(roundId, matchId) {
+  const match = getMatch(roundId, matchId);
+
+  if (!match || match.bye) return;
+
+  match.scoreA = null;
+  match.scoreB = null;
+  match.completed = false;
+  match.winnerId = null;
+
+  const round = getRoundById(roundId);
+  if (round) round.completed = false;
+
+  autosave();
+  render();
+}
+
+function toggleRoundCompleted(roundId) {
+  const round = getRoundById(roundId);
+
+  if (!round) return;
+
+  const incompleteMatches = round.matches.filter(match =>
+    !match.bye && !match.completed
+  );
+
+  if (!round.completed && incompleteMatches.length > 0) {
+    alert("Complete every match in this round first.");
+    return;
+  }
+
+  round.completed = !round.completed;
+  autosave();
+  render();
+}
+
+function renderMatchTeam(team) {
+  return `
+    <span class="team-logo" style="background:${escapeHtml(team.colour || "#6d5dfc")}">
+      ${renderTeamLogo(team)}
+    </span>
+    <strong>${escapeHtml(team.name)}</strong>
+  `;
+}
+
 function renderRounds() {
   const status = document.getElementById("roundStatus");
   const container = document.getElementById("roundsContainer");
@@ -138,7 +232,7 @@ function renderRounds() {
 
   PHDTournament.state.rounds.forEach(round => {
     const card = document.createElement("article");
-    card.className = "round-card";
+    card.className = `round-card ${round.completed ? "completed" : ""}`;
 
     const matchesHtml = round.matches.map(match => {
       const teamA = getTeamById(match.teamAId);
@@ -148,10 +242,7 @@ function renderRounds() {
         return `
           <div class="match-card bye-card">
             <div class="match-team">
-              <span class="team-logo" style="background:${escapeHtml(teamA.colour || "#6d5dfc")}">
-                ${renderTeamLogo(teamA)}
-              </span>
-              <strong>${escapeHtml(teamA.name)}</strong>
+              ${renderMatchTeam(teamA)}
             </div>
             <span class="bye-pill">BYE</span>
             <div></div>
@@ -160,28 +251,50 @@ function renderRounds() {
       }
 
       return `
-        <div class="match-card">
+        <div class="match-card" data-round-id="${round.id}" data-match-id="${match.id}">
           <div class="match-team">
-            <span class="team-logo" style="background:${escapeHtml(teamA.colour || "#6d5dfc")}">
-              ${renderTeamLogo(teamA)}
-            </span>
-            <strong>${escapeHtml(teamA.name)}</strong>
+            ${renderMatchTeam(teamA)}
           </div>
 
-          <span class="vs-pill">VS</span>
+          <div class="score-box">
+            <input class="score-a" type="number" min="0" value="${match.scoreA ?? ""}" placeholder="0" />
+            <span>–</span>
+            <input class="score-b" type="number" min="0" value="${match.scoreB ?? ""}" placeholder="0" />
+          </div>
 
           <div class="match-team">
-            <span class="team-logo" style="background:${escapeHtml(teamB.colour || "#6d5dfc")}">
-              ${renderTeamLogo(teamB)}
+            ${renderMatchTeam(teamB)}
+          </div>
+
+          <div class="match-actions">
+            <button class="small-button success save-match" type="button" data-round-id="${round.id}" data-match-id="${match.id}">
+              Save
+            </button>
+            <button class="small-button secondary clear-match" type="button" data-round-id="${round.id}" data-match-id="${match.id}">
+              Clear
+            </button>
+            <span class="status-pill ${match.completed ? "completed" : "open"}">
+              ${match.completed ? "Saved" : "Open"}
             </span>
-            <strong>${escapeHtml(teamB.name)}</strong>
           </div>
         </div>
       `;
     }).join("");
 
     card.innerHTML = `
-      <h3>Round ${round.number}</h3>
+      <div class="round-heading">
+        <div>
+          <h3>Round ${round.number}</h3>
+          <span class="status-pill ${round.completed ? "completed" : "open"}">
+            ${round.completed ? "Completed" : "In Progress"}
+          </span>
+        </div>
+
+        <button class="small-button ${round.completed ? "warning" : "success"} toggle-round" type="button" data-round-id="${round.id}">
+          ${round.completed ? "Reopen Round" : "Complete Round"}
+        </button>
+      </div>
+
       <div class="match-list">
         ${matchesHtml}
       </div>

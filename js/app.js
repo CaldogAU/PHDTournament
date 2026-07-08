@@ -111,6 +111,27 @@ function bindTeamEvents() {
 function bindRoundEvents() {
   document.getElementById("generateRound")
     .addEventListener("click", generateRound);
+
+  document.getElementById("roundsContainer")
+    .addEventListener("click", event => {
+      const roundId = event.target.dataset.roundId;
+      const matchId = event.target.dataset.matchId;
+
+      if (event.target.classList.contains("save-match")) {
+        const matchElement = event.target.closest(".match-card");
+        saveMatchScore(roundId, matchId, matchElement);
+        return;
+      }
+
+      if (event.target.classList.contains("clear-match")) {
+        clearMatchScore(roundId, matchId);
+        return;
+      }
+
+      if (event.target.classList.contains("toggle-round")) {
+        toggleRoundCompleted(roundId);
+      }
+    });
 }
 
 function bindAppEvents() {
