@@ -190,6 +190,10 @@ button.warning,
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);
 }
 
+.card:hover {
+  border-color: rgba(109, 93, 252, 0.45);
+}
+
 .wide {
   grid-column: 1 / -1;
 }
@@ -251,6 +255,14 @@ textarea {
 textarea {
   min-height: 90px;
   resize: vertical;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+.file-button:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .summary-list {
@@ -525,13 +537,24 @@ th {
   margin-top: 12px;
 }
 
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 32px;
+  color: var(--muted);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
 .display-mode {
   display: none;
 }
 
 body.display-active .app-header,
 body.display-active .brand-banner,
-body.display-active .app-layout {
+body.display-active .app-layout,
+body.display-active .app-footer {
   display: none;
 }
 
@@ -751,6 +774,30 @@ body.display-active .display-mode {
   }
 }
 
+@media (max-width: 600px) {
+  .app-layout {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .button-row,
+  .header-actions {
+    width: 100%;
+  }
+
+  .button-row button,
+  .header-actions button,
+  .file-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media print {
   body {
     background: white;
@@ -765,7 +812,8 @@ body.display-active .display-mode {
   .team-actions,
   .match-actions,
   #clearTeamForm,
-  #generateRound {
+  #generateRound,
+  .app-footer {
     display: none !important;
   }
 
