@@ -5,33 +5,27 @@ function getTournament() {
 function renderTournamentForm() {
   const tournament = getTournament();
 
-  document.getElementById("tournamentName").value = tournament.name;
-  document.getElementById("tournamentDescription").value = tournament.description;
-  document.getElementById("winPoints").value = tournament.settings.winPoints;
-  document.getElementById("drawPoints").value = tournament.settings.drawPoints;
-  document.getElementById("byePoints").value = tournament.settings.byePoints;
+  setValue("tournamentName", tournament.name);
+  setValue("tournamentDescription", tournament.description);
+  setValue("winPoints", tournament.settings.winPoints);
+  setValue("drawPoints", tournament.settings.drawPoints);
+  setValue("byePoints", tournament.settings.byePoints);
 }
 
 function renderTournamentSummary() {
   const tournament = getTournament();
 
-  document.getElementById("pageTitle").textContent =
-    tournament.name || "Tournament Manager";
+  setText("pageTitle", tournament.name || "Tournament Manager");
+  setText("summaryName", tournament.name || "Untitled Tournament");
+  setText("summaryDescription", tournament.description || "No description yet.");
 
-  document.getElementById("summaryName").textContent =
-    tournament.name || "Untitled Tournament";
+  setText(
+    "summaryScoring",
+    `Win ${tournament.settings.winPoints}, Draw ${tournament.settings.drawPoints}, Bye ${tournament.settings.byePoints}`
+  );
 
-  document.getElementById("summaryDescription").textContent =
-    tournament.description || "No description yet.";
-
-  document.getElementById("summaryScoring").textContent =
-    `Win ${tournament.settings.winPoints}, Draw ${tournament.settings.drawPoints}, Bye ${tournament.settings.byePoints}`;
-
-  document.getElementById("summaryTeams").textContent =
-    PHDTournament.state.teams.length;
-
-  document.getElementById("summaryRounds").textContent =
-    PHDTournament.state.rounds.length;
+  setText("summaryTeams", PHDTournament.state.teams.length);
+  setText("summaryRounds", PHDTournament.state.rounds.length);
 }
 
 function render() {
@@ -46,28 +40,21 @@ function render() {
 function updateTournamentSettings() {
   const tournament = getTournament();
 
-  tournament.name =
-    document.getElementById("tournamentName").value.trim() || "Untitled Tournament";
+  const name = getValue("tournamentName").trim();
 
-  tournament.description =
-    document.getElementById("tournamentDescription").value.trim();
+  tournament.name = isBlank(name) ? "Untitled Tournament" : name;
+  tournament.description = getValue("tournamentDescription").trim();
 
-  tournament.settings.winPoints =
-    Number(document.getElementById("winPoints").value) || 3;
-
-  tournament.settings.drawPoints =
-    Number(document.getElementById("drawPoints").value) || 0;
-
-  tournament.settings.byePoints =
-    Number(document.getElementById("byePoints").value) || 0;
+  tournament.settings.winPoints = toPositiveNumber(getValue("winPoints"), 3);
+  tournament.settings.drawPoints = toNumber(getValue("drawPoints"), 0);
+  tournament.settings.byePoints = toNumber(getValue("byePoints"), 0);
 
   autosave();
   render();
 }
 
 function bindTournamentEvents() {
-  document.getElementById("saveTournament")
-    .addEventListener("click", updateTournamentSettings);
+  bindClick("saveTournament", updateTournamentSettings);
 
   [
     "tournamentName",
@@ -76,24 +63,26 @@ function bindTournamentEvents() {
     "drawPoints",
     "byePoints"
   ].forEach(id => {
-    document.getElementById(id).addEventListener("change", updateTournamentSettings);
+    bindChange(id, updateTournamentSettings);
   });
 }
 
 function bindTeamEvents() {
-  document.getElementById("saveTeam")
-    .addEventListener("click", saveTeamFromForm);
+  bindClick("saveTeam", saveTeamFromForm);
+  bindClick("clearTeamForm", clearTeamForm);
 
-  document.getElementById("clearTeamForm")
-    .addEventListener("click", clearTeamForm);
+  const teamNameInput = getElement("teamName");
 
-  document.getElementById("teamName")
-    .addEventListener("keydown", event => {
+  if (teamNameInput) {
+    teamNameInput.addEventListener("keydown", event => {
       if (event.key === "Enter") saveTeamFromForm();
     });
+  }
 
-  document.getElementById("teamList")
-    .addEventListener("click", event => {
+  const teamList = getElement("teamList");
+
+  if (teamList) {
+    teamList.addEventListener("click", event => {
       const teamId = event.target.dataset.teamId;
 
       if (!teamId) return;
@@ -107,11 +96,11 @@ function bindTeamEvents() {
         deleteTeam(teamId);
       }
     });
+  }
 }
 
 function bindRoundEvents() {
-  document.getElementById("generateRound")
-    .addEventListener("click", generateRound);
+  bindClick("generateRound", generateRound);
 
   document.addEventListener("keydown", event => {
     if (event.ctrlKey && event.key.toLowerCase() === "backspace") {
@@ -119,8 +108,10 @@ function bindRoundEvents() {
     }
   });
 
-  document.getElementById("roundsContainer")
-    .addEventListener("click", event => {
+  const roundsContainer = getElement("roundsContainer");
+
+  if (roundsContainer) {
+    roundsContainer.addEventListener("click", event => {
       const roundId = event.target.dataset.roundId;
       const matchId = event.target.dataset.matchId;
 
@@ -139,44 +130,49 @@ function bindRoundEvents() {
         toggleRoundCompleted(roundId);
       }
     });
+  }
+}
+
+function bindDataToolEvents() {
+  bindClick("exportJson", exportTournamentJson);
+
+  const importInput = getElement("importJson");
+
+  if (importInput) {
+    importInput.addEventListener("change", importTournamentJson);
+  }
+
+  bindClick("printReport", printTournamentReport);
 }
 
 function bindAppEvents() {
-  document.getElementById("themeToggle")
-    .addEventListener("click", () => {
-      document.body.classList.toggle("dark");
+  bindClick("themeToggle", () => {
+    document.body.classList.toggle("dark");
 
-      const theme = document.body.classList.contains("dark") ? "dark" : "light";
-      saveThemePreference(theme);
-    });
+    const theme = document.body.classList.contains("dark") ? "dark" : "light";
+    saveThemePreference(theme);
+  });
 
-  document.getElementById("resetTournament")
-    .addEventListener("click", () => {
-      const confirmed = confirm("Reset this tournament? This cannot be undone.");
-      if (!confirmed) return;
+  bindClick("resetTournament", () => {
+    const confirmed = confirm("Reset this tournament? This cannot be undone.");
+    if (!confirmed) return;
 
-      resetState();
-      clearTeamForm();
-      render();
-    });
-
-  document.getElementById("exportJson")
-    .addEventListener("click", exportTournamentJson);
-
-  document.getElementById("importJson")
-    .addEventListener("change", importTournamentJson);
-
-  document.getElementById("printReport")
-    .addEventListener("click", printTournamentReport);
+    resetState();
+    clearTeamForm();
+    render();
+  });
 }
 
 function initApp() {
   loadThemePreference();
   loadState();
+
   bindTournamentEvents();
   bindTeamEvents();
   bindRoundEvents();
+  bindDataToolEvents();
   bindAppEvents();
+
   render();
   setSaveStatus("Loaded");
 }
