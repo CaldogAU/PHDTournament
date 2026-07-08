@@ -196,6 +196,8 @@ function bindRoundEvents() {
 
 function bindDataToolEvents() {
   bindClick("exportJson", exportTournamentJson);
+  bindClick("exportStandingsCsv", exportStandingsCsv);
+  bindClick("exportMatchesCsv", exportMatchesCsv);
 
   const importInput = getElement("importJson");
 

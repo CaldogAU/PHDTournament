@@ -92,5 +92,83 @@ function printTournamentReport() {
   window.print();
   setSaveStatus("Ready");
 }
+function escapeCsvValue(value) {
+  const stringValue = String(value ?? "");
 
+  if (
+    stringValue.includes(",") ||
+    stringValue.includes('"') ||
+    stringValue.includes("\n")
+  ) {
+    return `"${stringValue.replaceAll('"', '""')}"`;
+  }
+
+  return stringValue;
+}
+
+function downloadTextFile(filename, content, mimeType = "text/plain") {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function exportStandingsCsv() {
+  const standings = getStandings();
+
+  const rows = [
+    ["Rank", "Team", "Points", "Wins", "Draws", "Losses", "Byes", "Points For", "Points Against", "Difference"],
+    ...standings.map((team, index) => [
+      index + 1,
+      team.name,
+      team.points,
+      team.wins,
+      team.draws,
+      team.losses,
+      team.byes,
+      team.pointsFor,
+      team.pointsAgainst,
+      getScoreDifference(team)
+    ])
+  ];
+
+  const csv = rows
+    .map(row => row.map(escapeCsvValue).join(","))
+    .join("\n");
+
+  const filename = `${getSafeFileName(getTournament().name)}-standings.csv`;
+
+  downloadTextFile(filename, csv, "text/csv");
+  setSaveStatus("Standings CSV exported");
+}
+
+function exportMatchesCsv() {
+  const history = getMatchHistory();
+
+  const rows = [
+    ["Round", "Type", "Team A", "Team B", "Score", "Status"],
+    ...history.map(item => [
+      item.round,
+      item.type,
+      item.teamA,
+      item.teamB,
+      item.score,
+      item.status
+    ])
+  ];
+
+  const csv = rows
+    .map(row => row.map(escapeCsvValue).join(","))
+    .join("\n");
+
+  const filename = `${getSafeFileName(getTournament().name)}-matches.csv`;
+
+  downloadTextFile(filename, csv, "text/csv");
+  setSaveStatus("Matches CSV exported");
+}
 PHDTournament.modules.push("export");
