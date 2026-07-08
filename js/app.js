@@ -15,6 +15,37 @@ function renderTournamentForm() {
   setValue("byePoints", tournament.settings.byePoints);
 }
 
+function renderBranding() {
+  const tournament = getTournament();
+  const accentColour = tournament.accentColour || "#6d5dfc";
+
+  document.documentElement.style.setProperty("--accent", accentColour);
+
+  const headerLogo = getElement("headerLogo");
+
+  if (headerLogo) {
+    if (tournament.logoUrl) {
+      headerLogo.innerHTML = `
+        <img src="${escapeHtml(tournament.logoUrl)}" alt="${escapeHtml(tournament.name)} logo" onerror="this.parentElement.textContent='PHD'" />
+      `;
+    } else {
+      headerLogo.textContent = "PHD";
+    }
+  }
+
+  const banner = getElement("brandBanner");
+
+  if (banner) {
+    if (tournament.bannerUrl) {
+      banner.classList.add("visible");
+      banner.style.backgroundImage = `url("${tournament.bannerUrl}")`;
+    } else {
+      banner.classList.remove("visible");
+      banner.style.backgroundImage = "";
+    }
+  }
+}
+
 function renderTournamentSummary() {
   const tournament = getTournament();
 
@@ -33,14 +64,10 @@ function renderTournamentSummary() {
   "summaryBranding",
   tournament.logoUrl || tournament.bannerUrl ? "Custom branding active" : "Default"
 );
-
-document.documentElement.style.setProperty(
-  "--accent",
-  tournament.accentColour || "#6d5dfc"
-);
 }
 
 function render() {
+  renderBranding();
   renderTournamentForm();
   renderTournamentSummary();
   renderStatistics();
@@ -84,6 +111,19 @@ function bindTournamentEvents() {
 ]
   .forEach(id => {
     bindChange(id, updateTournamentSettings);
+  });
+  [
+    "tournamentLogoUrl",
+    "tournamentBannerUrl",
+    "tournamentAccentColour"
+  ].forEach(id => {
+    const element = getElement(id);
+
+    if (!element) return;
+
+    element.addEventListener("input", () => {
+      updateTournamentSettings();
+    });
   });
 }
 
