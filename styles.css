@@ -138,6 +138,33 @@ button.warning,
   grid-template-columns: repeat(3, 1fr);
 }
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.stat-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(109, 93, 252, 0.06);
+}
+
+.stat-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.stat-card strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
 label {
   display: grid;
   gap: 8px;
@@ -390,6 +417,12 @@ th {
   flex-wrap: wrap;
 }
 
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1050px) {
   .match-card {
     grid-template-columns: 1fr;
@@ -418,7 +451,8 @@ th {
   }
 
   .grid.three,
-  .team-form {
+  .team-form,
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 

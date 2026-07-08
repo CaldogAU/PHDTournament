@@ -37,6 +37,7 @@ function renderTournamentSummary() {
 function render() {
   renderTournamentForm();
   renderTournamentSummary();
+  renderStatistics();
   renderTeams();
   renderRounds();
   renderStandings();
