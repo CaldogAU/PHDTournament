@@ -150,6 +150,11 @@ function bindAppEvents() {
       clearTeamForm();
       render();
     });
+  document.getElementById("exportJson")
+    .addEventListener("click", exportTournamentJson);
+
+  document.getElementById("importJson")
+    .addEventListener("change", importTournamentJson);
 }
 
 function initApp() {

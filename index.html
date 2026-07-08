@@ -31,30 +31,12 @@
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card">
-          <span>Teams</span>
-          <strong id="statTeams">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>Rounds</span>
-          <strong id="statRounds">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>Completed Matches</span>
-          <strong id="statCompletedMatches">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>Leader</span>
-          <strong id="statLeader">—</strong>
-        </div>
-        <div class="stat-card">
-          <span>Highest Score</span>
-          <strong id="statHighestScore">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>Largest Margin</span>
-          <strong id="statLargestMargin">0</strong>
-        </div>
+        <div class="stat-card"><span>Teams</span><strong id="statTeams">0</strong></div>
+        <div class="stat-card"><span>Rounds</span><strong id="statRounds">0</strong></div>
+        <div class="stat-card"><span>Completed Matches</span><strong id="statCompletedMatches">0</strong></div>
+        <div class="stat-card"><span>Leader</span><strong id="statLeader">—</strong></div>
+        <div class="stat-card"><span>Highest Score</span><strong id="statHighestScore">0</strong></div>
+        <div class="stat-card"><span>Largest Margin</span><strong id="statLargestMargin">0</strong></div>
       </div>
     </section>
 
@@ -72,20 +54,9 @@
       </label>
 
       <div class="grid three">
-        <label>
-          Win Points
-          <input id="winPoints" type="number" min="1" />
-        </label>
-
-        <label>
-          Draw Points
-          <input id="drawPoints" type="number" min="0" />
-        </label>
-
-        <label>
-          Bye Points
-          <input id="byePoints" type="number" min="0" />
-        </label>
+        <label>Win Points <input id="winPoints" type="number" min="1" /></label>
+        <label>Draw Points <input id="drawPoints" type="number" min="0" /></label>
+        <label>Bye Points <input id="byePoints" type="number" min="0" /></label>
       </div>
 
       <button id="saveTournament" type="button">Save Tournament</button>
@@ -95,26 +66,11 @@
       <h2>Current Tournament</h2>
 
       <dl class="summary-list">
-        <div>
-          <dt>Name</dt>
-          <dd id="summaryName">—</dd>
-        </div>
-        <div>
-          <dt>Description</dt>
-          <dd id="summaryDescription">—</dd>
-        </div>
-        <div>
-          <dt>Scoring</dt>
-          <dd id="summaryScoring">—</dd>
-        </div>
-        <div>
-          <dt>Teams</dt>
-          <dd id="summaryTeams">0</dd>
-        </div>
-        <div>
-          <dt>Rounds</dt>
-          <dd id="summaryRounds">0</dd>
-        </div>
+        <div><dt>Name</dt><dd id="summaryName">—</dd></div>
+        <div><dt>Description</dt><dd id="summaryDescription">—</dd></div>
+        <div><dt>Scoring</dt><dd id="summaryScoring">—</dd></div>
+        <div><dt>Teams</dt><dd id="summaryTeams">0</dd></div>
+        <div><dt>Rounds</dt><dd id="summaryRounds">0</dd></div>
       </dl>
     </section>
 
@@ -162,20 +118,30 @@
         <table>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Team</th>
-              <th>Pts</th>
-              <th>W</th>
-              <th>D</th>
-              <th>L</th>
-              <th>Bye</th>
-              <th>PF</th>
-              <th>PA</th>
-              <th>Diff</th>
+              <th>#</th><th>Team</th><th>Pts</th><th>W</th><th>D</th><th>L</th>
+              <th>Bye</th><th>PF</th><th>PA</th><th>Diff</th>
             </tr>
           </thead>
           <tbody id="standingsBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <div class="section-heading">
+        <div>
+          <h2>Data Tools</h2>
+          <p class="muted">Back up, move, or restore tournaments using JSON files.</p>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button id="exportJson" type="button">Export JSON</button>
+
+        <label class="file-button">
+          Import JSON
+          <input id="importJson" type="file" accept="application/json,.json" />
+        </label>
       </div>
     </section>
   </main>
