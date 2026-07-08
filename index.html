@@ -52,6 +52,7 @@
 
       <div class="stats-grid">
         <div class="stat-card"><span>Teams</span><strong id="statTeams">0</strong></div>
+        <div class="stat-card"><span>Games</span><strong id="statGames">0</strong></div>
         <div class="stat-card"><span>Rounds</span><strong id="statRounds">0</strong></div>
         <div class="stat-card"><span>Completed Matches</span><strong id="statCompletedMatches">0</strong></div>
         <div class="stat-card"><span>Leader</span><strong id="statLeader">—</strong></div>
@@ -105,9 +106,30 @@
         <div><dt>Description</dt><dd id="summaryDescription">—</dd></div>
         <div><dt>Scoring</dt><dd id="summaryScoring">—</dd></div>
         <div><dt>Teams</dt><dd id="summaryTeams">0</dd></div>
+        <div><dt>Games</dt><dd id="summaryGames">0</dd></div>
         <div><dt>Rounds</dt><dd id="summaryRounds">0</dd></div>
         <div><dt>Branding</dt><dd id="summaryBranding">Default</dd></div>
       </dl>
+    </section>
+
+    <section class="card wide">
+      <div class="section-heading">
+        <div>
+          <h2>Video Games</h2>
+          <p id="gameCount" class="muted">0 / 5 games added</p>
+        </div>
+        <button id="clearGameForm" class="secondary" type="button">Clear Form</button>
+      </div>
+
+      <div class="game-form">
+        <input id="gameName" type="text" placeholder="Game name" />
+        <input id="gamePlatform" type="text" placeholder="Platform e.g. PC, Switch, PS5" />
+        <input id="gameFormat" type="text" placeholder="Format e.g. 1v1, 2v2, Time Trial" />
+        <input id="gameLogoUrl" type="url" placeholder="Cover/logo URL optional" />
+        <button id="saveGame" type="button">Add Game</button>
+      </div>
+
+      <ul id="gameList" class="game-list"></ul>
     </section>
 
     <section class="card wide">
@@ -166,8 +188,21 @@
     <section class="card wide">
       <div class="section-heading">
         <div>
+          <h2>Recent Activity</h2>
+          <p class="muted">Latest completed games and results.</p>
+        </div>
+      </div>
+
+      <div class="activity-ticker">
+        <div id="activityTickerText">No recent activity yet.</div>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <div class="section-heading">
+        <div>
           <h2>Match History</h2>
-          <p class="muted">A running record of generated pairings, byes and saved results.</p>
+          <p class="muted">A running record of generated pairings, games, byes and saved results.</p>
         </div>
       </div>
 
@@ -199,7 +234,7 @@
   </main>
 
   <footer class="app-footer">
-    <span>PHDTournament v1.0</span>
+    <span>PHDTournament v1.1</span>
     <span>Autosaves locally in this browser. Export JSON before clearing browser data.</span>
   </footer>
 
@@ -208,6 +243,7 @@
   <script src="js/dom.js"></script>
   <script src="js/validation.js"></script>
   <script src="js/helpers.js"></script>
+  <script src="js/games.js"></script>
   <script src="js/teams.js"></script>
   <script src="js/ladder.js"></script>
   <script src="js/rounds.js"></script>
