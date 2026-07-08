@@ -82,12 +82,12 @@ function toggleDisplayMode(forceOff = false) {
 }
 
 document.addEventListener("keydown", event => {
-  if (
-    event.key === "Escape" &&
-    document.body.classList.contains("display-active")
-  ) {
-    toggleDisplayMode(true);
-  }
+  if (event.key !== "Escape") return;
+
+  if (!document.body.classList.contains("display-active")) return;
+
+  event.preventDefault();
+  toggleDisplayMode(true);
 });
 
 PHDTournament.modules.push("display");

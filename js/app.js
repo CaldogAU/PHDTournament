@@ -76,7 +76,9 @@ function render() {
   renderStandings();
   renderMatchHistory();
   renderReportPreview();
+  if (document.body.classList.contains("display-active")) {
   renderDisplayMode();
+}
 }
 
 function updateTournamentSettings() {
