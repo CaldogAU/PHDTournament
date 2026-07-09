@@ -144,7 +144,7 @@ function renderGameTabs() {
           <section class="card wide">
             <div class="game-tab-header">
               <div>
-                <p class="eyebrow">Game Tab</p>
+                <p class="eyebrow">Game Page</p>
                 <h2>${escapeHtml(game.name)}</h2>
                 <p class="muted">
                   ${escapeHtml(game.platform || "No platform listed")}
@@ -174,7 +174,7 @@ function renderGameTabs() {
             <div class="section-heading">
               <div>
                 <h2>${escapeHtml(game.name)} Matches</h2>
-                <p class="muted">Matches assigned to this game from the rounds section.</p>
+                <p class="muted">Matches assigned to this game from the schedule page.</p>
               </div>
             </div>
 
@@ -246,7 +246,15 @@ function switchTab(tabName) {
 }
 
 function getValidTabName(tabName) {
-  const staticTabs = ["home", "admin", "report"];
+  const staticTabs = [
+    "home",
+    "admin",
+    "games",
+    "schedule",
+    "standings",
+    "reports",
+    "displayPage"
+  ];
 
   if (staticTabs.includes(tabName)) {
     return tabName;
@@ -263,16 +271,18 @@ function loadActiveTab() {
 }
 
 function bindTabEvents() {
-  const tabNav = document.querySelector(".tab-nav");
+  document.addEventListener("click", event => {
+    const tabButton = event.target.closest(".tab-button");
+    const jumpButton = event.target.closest("[data-tab-jump]");
 
-  if (!tabNav) return;
+    if (tabButton) {
+      switchTab(tabButton.dataset.tab);
+      return;
+    }
 
-  tabNav.addEventListener("click", event => {
-    const button = event.target.closest(".tab-button");
-
-    if (!button) return;
-
-    switchTab(button.dataset.tab);
+    if (jumpButton) {
+      switchTab(jumpButton.dataset.tabJump);
+    }
   });
 }
 
