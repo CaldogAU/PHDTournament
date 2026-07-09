@@ -97,6 +97,10 @@ function getMatchesForGame(gameId) {
   );
 }
 
+function getStaticTabs() {
+  return ["home", "admin", "games", "schedule", "standings", "reports", "display"];
+}
+
 function renderGameTabs() {
   const buttonContainer = getElement("gameTabButtons");
   const panelContainer = getElement("gameTabPanels");
@@ -105,11 +109,13 @@ function renderGameTabs() {
 
   const games = getGames();
 
-  buttonContainer.innerHTML = games.map(game => `
-    <button class="tab-button game-tab-button" type="button" data-tab="${getGameTabName(game)}">
-      ${escapeHtml(game.name)}
-    </button>
-  `).join("");
+  buttonContainer.innerHTML = games.length
+    ? games.map(game => `
+      <button class="tab-button game-tab-button" type="button" data-tab="${getGameTabName(game)}">
+        ${escapeHtml(game.name)}
+      </button>
+    `).join("")
+    : `<span class="sidebar-empty">No games yet</span>`;
 
   panelContainer.innerHTML = games.map(game => {
     const matches = getMatchesForGame(game.id);
@@ -174,7 +180,7 @@ function renderGameTabs() {
             <div class="section-heading">
               <div>
                 <h2>${escapeHtml(game.name)} Matches</h2>
-                <p class="muted">Matches assigned to this game from the schedule page.</p>
+                <p class="muted">Matches assigned to this game from the rounds section.</p>
               </div>
             </div>
 
@@ -228,35 +234,31 @@ function updateTournamentSettings() {
 }
 
 function switchTab(tabName) {
+  const validTabName = getValidTabName(tabName);
   const tabButtons = document.querySelectorAll(".tab-button");
   const tabPanels = document.querySelectorAll(".tab-panel");
 
   tabButtons.forEach(button => {
-    const isActive = button.dataset.tab === tabName;
+    const isActive = button.dataset.tab === validTabName;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-selected", String(isActive));
   });
 
   tabPanels.forEach(panel => {
-    const expectedId = `${tabName}Tab`;
+    const expectedId = `${validTabName}Tab`;
     panel.classList.toggle("active", panel.id === expectedId);
   });
 
-  localStorage.setItem("phdTournamentActiveTab", tabName);
+  const sidebar = document.querySelector(".app-sidebar");
+  if (sidebar) {
+    sidebar.classList.remove("nav-open");
+  }
+
+  localStorage.setItem("phdTournamentActiveTab", validTabName);
 }
 
 function getValidTabName(tabName) {
-  const staticTabs = [
-    "home",
-    "admin",
-    "games",
-    "schedule",
-    "standings",
-    "reports",
-    "displayPage"
-  ];
-
-  if (staticTabs.includes(tabName)) {
+  if (getStaticTabs().includes(tabName)) {
     return tabName;
   }
 
@@ -271,18 +273,16 @@ function loadActiveTab() {
 }
 
 function bindTabEvents() {
-  document.addEventListener("click", event => {
-    const tabButton = event.target.closest(".tab-button");
-    const jumpButton = event.target.closest("[data-tab-jump]");
+  const tabNav = document.querySelector(".tab-nav");
 
-    if (tabButton) {
-      switchTab(tabButton.dataset.tab);
-      return;
-    }
+  if (!tabNav) return;
 
-    if (jumpButton) {
-      switchTab(jumpButton.dataset.tabJump);
-    }
+  tabNav.addEventListener("click", event => {
+    const button = event.target.closest(".tab-button");
+
+    if (!button) return;
+
+    switchTab(button.dataset.tab);
   });
 }
 
@@ -346,6 +346,7 @@ function bindGameEvents() {
 
       if (event.target.classList.contains("edit-game")) {
         editGame(gameId);
+        switchTab("games");
         return;
       }
 
@@ -380,6 +381,7 @@ function bindTeamEvents() {
 
       if (event.target.classList.contains("edit-team")) {
         editTeam(teamId);
+        switchTab("admin");
         return;
       }
 
@@ -443,6 +445,7 @@ function bindDataToolEvents() {
 
 function bindAppEvents() {
   bindClick("displayModeToggle", toggleDisplayMode);
+  bindClick("displayModeTogglePage", toggleDisplayMode);
 
   bindClick("themeToggle", () => {
     document.body.classList.toggle("dark");
