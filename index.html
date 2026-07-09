@@ -32,6 +32,8 @@
   <nav class="tab-nav" aria-label="Main navigation">
     <button class="tab-button active" type="button" data-tab="home">Home</button>
     <button class="tab-button" type="button" data-tab="admin">Admin</button>
+    <button class="tab-button" type="button" data-tab="report">Tournament Report</button>
+    <span id="gameTabButtons" class="game-tab-buttons"></span>
   </nav>
 
   <main>
@@ -72,30 +74,6 @@
         <section class="card wide">
           <div class="section-heading">
             <div>
-              <h2>Tournament Report</h2>
-              <p class="muted">Printable report with standings and match history.</p>
-            </div>
-            <button id="printFullReport" type="button" class="secondary">Print Full Report</button>
-          </div>
-
-          <div id="reportPreview"></div>
-        </section>
-
-        <section class="card wide">
-          <div class="section-heading">
-            <div>
-              <h2>Rounds</h2>
-              <p id="roundStatus" class="muted">No rounds generated yet.</p>
-            </div>
-            <button id="generateRound" type="button">Generate Next Round</button>
-          </div>
-
-          <div id="roundsContainer" class="rounds-container"></div>
-        </section>
-
-        <section class="card wide">
-          <div class="section-heading">
-            <div>
               <h2>Standings</h2>
               <p class="muted">The ladder updates when scores are saved and rounds are completed.</p>
             </div>
@@ -117,35 +95,24 @@
         <section class="card wide">
           <div class="section-heading">
             <div>
+              <h2>Rounds</h2>
+              <p id="roundStatus" class="muted">No rounds generated yet.</p>
+            </div>
+            <button id="generateRound" type="button">Generate Next Round</button>
+          </div>
+
+          <div id="roundsContainer" class="rounds-container"></div>
+        </section>
+
+        <section class="card wide">
+          <div class="section-heading">
+            <div>
               <h2>Match History</h2>
               <p class="muted">A running record of generated pairings, games, byes and saved results.</p>
             </div>
           </div>
 
           <div id="historyContainer" class="history-container"></div>
-        </section>
-
-        <section class="card wide">
-          <div class="section-heading">
-            <div>
-              <h2>Data Tools</h2>
-              <p class="muted">Back up, restore, print, or export tournament data.</p>
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button id="exportJson" type="button">Export JSON</button>
-            <button id="createRestorePoint" type="button" class="secondary">Create Restore Point</button>
-            <button id="restoreLastPoint" type="button" class="secondary">Restore Last Point</button>
-            <button id="exportStandingsCsv" type="button" class="secondary">Export Standings CSV</button>
-            <button id="exportMatchesCsv" type="button" class="secondary">Export Matches CSV</button>
-            <button id="printReport" type="button" class="secondary">Print Report</button>
-
-            <label class="file-button">
-              Import JSON
-              <input id="importJson" type="file" accept="application/json,.json" />
-            </label>
-          </div>
         </section>
       </div>
     </section>
@@ -242,8 +209,49 @@
 
           <ul id="teamList" class="team-list"></ul>
         </section>
+
+        <section class="card wide">
+          <div class="section-heading">
+            <div>
+              <h2>Data Tools</h2>
+              <p class="muted">Back up, restore, print, or export tournament data.</p>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="exportJson" type="button">Export JSON</button>
+            <button id="createRestorePoint" type="button" class="secondary">Create Restore Point</button>
+            <button id="restoreLastPoint" type="button" class="secondary">Restore Last Point</button>
+            <button id="exportStandingsCsv" type="button" class="secondary">Export Standings CSV</button>
+            <button id="exportMatchesCsv" type="button" class="secondary">Export Matches CSV</button>
+            <button id="printReport" type="button" class="secondary">Print Report</button>
+
+            <label class="file-button">
+              Import JSON
+              <input id="importJson" type="file" accept="application/json,.json" />
+            </label>
+          </div>
+        </section>
       </div>
     </section>
+
+    <section id="reportTab" class="tab-panel">
+      <div class="app-layout">
+        <section class="card wide">
+          <div class="section-heading">
+            <div>
+              <h2>Tournament Report</h2>
+              <p class="muted">Printable report with standings and match history.</p>
+            </div>
+            <button id="printFullReport" type="button" class="secondary">Print Full Report</button>
+          </div>
+
+          <div id="reportPreview"></div>
+        </section>
+      </div>
+    </section>
+
+    <div id="gameTabPanels"></div>
   </main>
 
   <footer class="app-footer">

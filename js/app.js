@@ -82,6 +82,112 @@ function renderTournamentSummary() {
   );
 }
 
+function getGameTabName(game) {
+  return `game-${game.id}`;
+}
+
+function getMatchesForGame(gameId) {
+  return PHDTournament.state.rounds.flatMap(round =>
+    round.matches
+      .filter(match => !match.bye && match.gameId === gameId)
+      .map(match => ({
+        ...match,
+        roundNumber: round.number
+      }))
+  );
+}
+
+function renderGameTabs() {
+  const buttonContainer = getElement("gameTabButtons");
+  const panelContainer = getElement("gameTabPanels");
+
+  if (!buttonContainer || !panelContainer) return;
+
+  const games = getGames();
+
+  buttonContainer.innerHTML = games.map(game => `
+    <button class="tab-button game-tab-button" type="button" data-tab="${getGameTabName(game)}">
+      ${escapeHtml(game.name)}
+    </button>
+  `).join("");
+
+  panelContainer.innerHTML = games.map(game => {
+    const matches = getMatchesForGame(game.id);
+    const completedMatches = matches.filter(match => match.completed);
+
+    const matchRows = matches.length
+      ? matches.map(match => {
+          const teamA = getTeamById(match.teamAId);
+          const teamB = getTeamById(match.teamBId);
+
+          return `
+            <div class="game-tab-match">
+              <span>Round ${match.roundNumber}</span>
+              <strong>${escapeHtml(teamA ? teamA.name : "Unknown")}</strong>
+              <span>${match.completed ? `${match.scoreA} - ${match.scoreB}` : "vs"}</span>
+              <strong>${escapeHtml(teamB ? teamB.name : "Unknown")}</strong>
+              <span class="status-pill ${match.completed ? "completed" : "open"}">
+                ${match.completed ? "Completed" : "Open"}
+              </span>
+            </div>
+          `;
+        }).join("")
+      : `
+        <div class="empty-state">
+          No matches have been assigned to this game yet.
+        </div>
+      `;
+
+    return `
+      <section id="${getGameTabName(game)}Tab" class="tab-panel">
+        <div class="app-layout">
+          <section class="card wide">
+            <div class="game-tab-header">
+              <div>
+                <p class="eyebrow">Game Tab</p>
+                <h2>${escapeHtml(game.name)}</h2>
+                <p class="muted">
+                  ${escapeHtml(game.platform || "No platform listed")}
+                  ${game.format ? ` · ${escapeHtml(game.format)}` : ""}
+                </p>
+              </div>
+
+              ${
+                game.logoUrl
+                  ? `<span class="game-tab-logo"><img src="${escapeHtml(game.logoUrl)}" alt="${escapeHtml(game.name)} logo" /></span>`
+                  : `<span class="game-tab-logo">${escapeHtml(game.name.slice(0, 3).toUpperCase())}</span>`
+              }
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Total Matches</h3>
+            <strong class="big-number">${matches.length}</strong>
+          </section>
+
+          <section class="card">
+            <h3>Completed Matches</h3>
+            <strong class="big-number">${completedMatches.length}</strong>
+          </section>
+
+          <section class="card wide">
+            <div class="section-heading">
+              <div>
+                <h2>${escapeHtml(game.name)} Matches</h2>
+                <p class="muted">Matches assigned to this game from the rounds section.</p>
+              </div>
+            </div>
+
+            <div class="game-tab-match-list">
+              ${matchRows}
+            </div>
+          </section>
+        </div>
+      </section>
+    `;
+  }).join("");
+}
+
 function render() {
   ensureStateShape();
 
@@ -90,6 +196,7 @@ function render() {
   renderTournamentSummary();
   renderStatistics();
   renderGames();
+  renderGameTabs();
   renderTeams();
   renderRounds();
   renderStandings();
@@ -138,9 +245,21 @@ function switchTab(tabName) {
   localStorage.setItem("phdTournamentActiveTab", tabName);
 }
 
+function getValidTabName(tabName) {
+  const staticTabs = ["home", "admin", "report"];
+
+  if (staticTabs.includes(tabName)) {
+    return tabName;
+  }
+
+  const matchingGame = getGames().find(game => getGameTabName(game) === tabName);
+
+  return matchingGame ? tabName : "home";
+}
+
 function loadActiveTab() {
   const savedTab = localStorage.getItem("phdTournamentActiveTab") || "home";
-  switchTab(savedTab);
+  switchTab(getValidTabName(savedTab));
 }
 
 function bindTabEvents() {
@@ -187,14 +306,23 @@ function bindTournamentEvents() {
 }
 
 function bindGameEvents() {
-  bindClick("saveGame", saveGameFromForm);
+  bindClick("saveGame", () => {
+    saveGameFromForm();
+    renderGameTabs();
+    loadActiveTab();
+  });
+
   bindClick("clearGameForm", clearGameForm);
 
   const gameNameInput = getElement("gameName");
 
   if (gameNameInput) {
     gameNameInput.addEventListener("keydown", event => {
-      if (event.key === "Enter") saveGameFromForm();
+      if (event.key === "Enter") {
+        saveGameFromForm();
+        renderGameTabs();
+        loadActiveTab();
+      }
     });
   }
 
@@ -213,6 +341,8 @@ function bindGameEvents() {
 
       if (event.target.classList.contains("delete-game")) {
         deleteGame(gameId);
+        renderGameTabs();
+        loadActiveTab();
       }
     });
   }
