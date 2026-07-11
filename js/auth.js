@@ -4,18 +4,71 @@ const PHDAuth = {
   user: null,
   isAdmin: false,
   ready: null,
-  listeners: new Set()
+  listeners: new Set(),
+  accessObserver: null
 };
 
+const ADMIN_CONTROL_IDS = [
+  "tournamentName",
+  "tournamentDescription",
+  "tournamentLogoUrl",
+  "tournamentBannerUrl",
+  "tournamentAccentColour",
+  "winPoints",
+  "drawPoints",
+  "byePoints",
+  "saveTournament",
+  "teamName",
+  "teamShortName",
+  "teamLogoUrl",
+  "teamColour",
+  "saveTeam",
+  "clearTeamForm",
+  "gameName",
+  "gamePlatform",
+  "gameFormat",
+  "gameLogoUrl",
+  "saveGame",
+  "clearGameForm",
+  "generateRound",
+  "createRestorePoint",
+  "restoreLastPoint",
+  "importJson",
+  "resetTournament"
+];
+
+const ADMIN_DYNAMIC_SELECTORS = [
+  ".edit-team",
+  ".delete-team",
+  ".edit-game",
+  ".delete-game",
+  ".save-match",
+  ".clear-match",
+  ".toggle-round",
+  ".match-game-select",
+  ".match-card input",
+  ".match-card select",
+  ".match-card textarea"
+];
+
+function getAuthState() {
+  return {
+    user: PHDAuth.user,
+    isAdmin: PHDAuth.isAdmin
+  };
+}
+
 function notifyAuthListeners() {
+  const state = getAuthState();
+
   PHDAuth.listeners.forEach(listener => {
     try {
-      listener({
-        user: PHDAuth.user,
-        isAdmin: PHDAuth.isAdmin
-      });
+      listener(state);
     } catch (error) {
-      console.error("Authentication listener failed.", error);
+      console.error(
+        "Authentication listener failed.",
+        error
+      );
     }
   });
 }
@@ -27,10 +80,7 @@ function subscribeToAuth(listener) {
 
   PHDAuth.listeners.add(listener);
 
-  listener({
-    user: PHDAuth.user,
-    isAdmin: PHDAuth.isAdmin
-  });
+  listener(getAuthState());
 
   return () => {
     PHDAuth.listeners.delete(listener);
@@ -40,22 +90,31 @@ function subscribeToAuth(listener) {
 async function signInAdmin(email, password) {
   const firebase = await PHDFirebase.ready;
 
-  const normalisedEmail = String(email || "").trim();
-  const enteredPassword = String(password || "");
+  const normalisedEmail =
+    String(email || "").trim();
+
+  const enteredPassword =
+    String(password || "");
 
   if (!normalisedEmail || !enteredPassword) {
-    throw new Error("Enter both an email address and password.");
+    throw new Error(
+      "Enter both an email address and password."
+    );
   }
 
-  const credential = await firebase.authSdk.signInWithEmailAndPassword(
-    firebase.auth,
-    normalisedEmail,
-    enteredPassword
-  );
+  const credential =
+    await firebase.authSdk.signInWithEmailAndPassword(
+      firebase.auth,
+      normalisedEmail,
+      enteredPassword
+    );
 
   if (credential.user.uid !== PHD_ADMIN_UID) {
     await firebase.authSdk.signOut(firebase.auth);
-    throw new Error("This account does not have tournament administrator access.");
+
+    throw new Error(
+      "This account does not have tournament administrator access."
+    );
   }
 
   return credential.user;
@@ -63,7 +122,10 @@ async function signInAdmin(email, password) {
 
 async function signOutAdmin() {
   const firebase = await PHDFirebase.ready;
-  await firebase.authSdk.signOut(firebase.auth);
+
+  await firebase.authSdk.signOut(
+    firebase.auth
+  );
 }
 
 function getSignedInUser() {
@@ -74,40 +136,345 @@ function isTournamentAdmin() {
   return PHDAuth.isAdmin;
 }
 
-PHDAuth.ready = PHDFirebase.ready.then(firebase =>
-  new Promise(resolve => {
-    firebase.authSdk.onAuthStateChanged(
-      firebase.auth,
-      user => {
-        PHDAuth.user = user;
-        PHDAuth.isAdmin = Boolean(user && user.uid === PHD_ADMIN_UID);
+function setElementAdminState(element, isAdmin) {
+  if (!element) return;
 
-        notifyAuthListeners();
+  const tagName =
+    element.tagName.toLowerCase();
 
-        resolve({
-          user: PHDAuth.user,
-          isAdmin: PHDAuth.isAdmin
-        });
-      },
-      error => {
-        console.error("Firebase Authentication failed.", error);
+  const canBeDisabled = [
+    "button",
+    "input",
+    "select",
+    "textarea",
+    "fieldset"
+  ].includes(tagName);
 
-        PHDAuth.user = null;
-        PHDAuth.isAdmin = false;
+  if (canBeDisabled) {
+    element.disabled = !isAdmin;
+  }
 
-        notifyAuthListeners();
-        resolve({
-          user: null,
-          isAdmin: false
-        });
-      }
+  element.setAttribute(
+    "aria-disabled",
+    String(!isAdmin)
+  );
+
+  element.classList.toggle(
+    "admin-control-locked",
+    !isAdmin
+  );
+
+  if (!isAdmin) {
+    element.setAttribute(
+      "data-admin-locked",
+      "true"
     );
-  })
-);
+
+    if (
+      element.classList.contains("edit-team") ||
+      element.classList.contains("delete-team") ||
+      element.classList.contains("edit-game") ||
+      element.classList.contains("delete-game") ||
+      element.classList.contains("save-match") ||
+      element.classList.contains("clear-match") ||
+      element.classList.contains("toggle-round")
+    ) {
+      element.hidden = true;
+    }
+  } else {
+    element.removeAttribute(
+      "data-admin-locked"
+    );
+
+    if (
+      element.classList.contains("edit-team") ||
+      element.classList.contains("delete-team") ||
+      element.classList.contains("edit-game") ||
+      element.classList.contains("delete-game") ||
+      element.classList.contains("save-match") ||
+      element.classList.contains("clear-match") ||
+      element.classList.contains("toggle-round")
+    ) {
+      element.hidden = false;
+    }
+  }
+}
+
+function getAdminControlledElements() {
+  const elements = new Set();
+
+  ADMIN_CONTROL_IDS.forEach(id => {
+    const element =
+      document.getElementById(id);
+
+    if (element) {
+      elements.add(element);
+    }
+  });
+
+  ADMIN_DYNAMIC_SELECTORS.forEach(selector => {
+    document
+      .querySelectorAll(selector)
+      .forEach(element => {
+        elements.add(element);
+      });
+  });
+
+  return Array.from(elements);
+}
+
+function updateViewOnlyNotice(isAdmin) {
+  const existingNotice =
+    document.getElementById(
+      "viewOnlyNotice"
+    );
+
+  if (isAdmin) {
+    if (existingNotice) {
+      existingNotice.remove();
+    }
+
+    return;
+  }
+
+  if (existingNotice) return;
+
+  const main = document.querySelector(
+    ".app-workspace main"
+  );
+
+  if (!main) return;
+
+  const notice =
+    document.createElement("div");
+
+  notice.id = "viewOnlyNotice";
+  notice.setAttribute("role", "status");
+  notice.style.margin =
+    "18px 24px 0";
+  notice.style.padding =
+    "14px 16px";
+  notice.style.border =
+    "1px solid var(--border)";
+  notice.style.borderRadius =
+    "14px";
+  notice.style.background =
+    "rgba(109, 93, 252, 0.08)";
+  notice.style.color =
+    "var(--text)";
+  notice.style.fontWeight =
+    "700";
+
+  notice.textContent =
+    "View-only mode: sign in as a tournament administrator to make changes.";
+
+  main.parentElement.insertBefore(
+    notice,
+    main
+  );
+}
+
+function applyAdminAccessState() {
+  const isAdmin =
+    isTournamentAdmin();
+
+  document.body.classList.toggle(
+    "admin-mode",
+    isAdmin
+  );
+
+  document.body.classList.toggle(
+    "view-only-mode",
+    !isAdmin
+  );
+
+  document.body.dataset.accessMode =
+    isAdmin ? "admin" : "viewer";
+
+  getAdminControlledElements().forEach(
+    element => {
+      setElementAdminState(
+        element,
+        isAdmin
+      );
+    }
+  );
+
+  updateViewOnlyNotice(isAdmin);
+}
+
+function isProtectedElement(element) {
+  if (!(element instanceof Element)) {
+    return false;
+  }
+
+  if (
+    element.closest(
+      "#adminLoginForm, #adminSignOut"
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    ADMIN_CONTROL_IDS.some(id =>
+      Boolean(element.closest(`#${id}`))
+    )
+  ) {
+    return true;
+  }
+
+  return ADMIN_DYNAMIC_SELECTORS.some(
+    selector =>
+      Boolean(element.closest(selector))
+  );
+}
+
+function showAdminRequiredMessage() {
+  const authStatus =
+    document.getElementById(
+      "authStatus"
+    );
+
+  if (authStatus) {
+    authStatus.textContent =
+      "Administrator access is required to make that change.";
+
+    authStatus.classList.add("error");
+  }
+
+  const headerStatus =
+    document.getElementById(
+      "headerAuthStatus"
+    );
+
+  if (headerStatus) {
+    headerStatus.textContent =
+      "View-only mode";
+  }
+}
+
+function blockUnauthorisedInteraction(event) {
+  if (isTournamentAdmin()) {
+    return;
+  }
+
+  if (!isProtectedElement(event.target)) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+
+  showAdminRequiredMessage();
+}
+
+function startAdminControlObserver() {
+  if (PHDAuth.accessObserver) {
+    PHDAuth.accessObserver.disconnect();
+  }
+
+  PHDAuth.accessObserver =
+    new MutationObserver(() => {
+      applyAdminAccessState();
+    });
+
+  PHDAuth.accessObserver.observe(
+    document.body,
+    {
+      childList: true,
+      subtree: true
+    }
+  );
+}
+
+function initialiseAccessControl() {
+  document.addEventListener(
+    "click",
+    blockUnauthorisedInteraction,
+    true
+  );
+
+  document.addEventListener(
+    "change",
+    blockUnauthorisedInteraction,
+    true
+  );
+
+  document.addEventListener(
+    "input",
+    blockUnauthorisedInteraction,
+    true
+  );
+
+  document.addEventListener(
+    "submit",
+    blockUnauthorisedInteraction,
+    true
+  );
+
+  startAdminControlObserver();
+  applyAdminAccessState();
+
+  subscribeToAuth(() => {
+    applyAdminAccessState();
+  });
+}
+
+PHDAuth.ready =
+  PHDFirebase.ready.then(firebase =>
+    new Promise(resolve => {
+      firebase.authSdk.onAuthStateChanged(
+        firebase.auth,
+        user => {
+          PHDAuth.user = user;
+
+          PHDAuth.isAdmin = Boolean(
+            user &&
+            user.uid === PHD_ADMIN_UID
+          );
+
+          notifyAuthListeners();
+
+          resolve(getAuthState());
+        },
+        error => {
+          console.error(
+            "Firebase Authentication failed.",
+            error
+          );
+
+          PHDAuth.user = null;
+          PHDAuth.isAdmin = false;
+
+          notifyAuthListeners();
+
+          resolve(getAuthState());
+        }
+      );
+    })
+  );
+
+if (
+  document.readyState === "loading"
+) {
+  document.addEventListener(
+    "DOMContentLoaded",
+    initialiseAccessControl
+  );
+} else {
+  initialiseAccessControl();
+}
 
 window.PHDAuth = PHDAuth;
 window.signInAdmin = signInAdmin;
 window.signOutAdmin = signOutAdmin;
-window.getSignedInUser = getSignedInUser;
-window.isTournamentAdmin = isTournamentAdmin;
-window.subscribeToAuth = subscribeToAuth;
+window.getSignedInUser =
+  getSignedInUser;
+window.isTournamentAdmin =
+  isTournamentAdmin;
+window.subscribeToAuth =
+  subscribeToAuth;
+window.applyAdminAccessState =
+  applyAdminAccessState;
