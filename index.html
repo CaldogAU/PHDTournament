@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PHDTournament</title>
+  <title>PHDlympics</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,8 +13,9 @@
     <aside class="app-sidebar">
       <div class="sidebar-brand">
         <div id="headerLogo" class="header-logo">PHD</div>
+
         <div>
-          <p class="eyebrow">PHDTournament</p>
+          <p class="eyebrow">PHDlympics</p>
           <h1 id="pageTitle">Tournament Manager</h1>
         </div>
       </div>
@@ -29,13 +30,56 @@
         <button class="tab-button" type="button" data-tab="display">Display</button>
 
         <div class="sidebar-divider"></div>
+
         <p class="sidebar-label">Game Pages</p>
         <span id="gameTabButtons" class="game-tab-buttons"></span>
       </nav>
 
+      <section class="auth-panel" aria-labelledby="authPanelTitle">
+        <div id="signedOutAuth">
+          <p id="authPanelTitle" class="sidebar-label">Tournament Admin</p>
+
+          <form id="adminLoginForm">
+            <label for="adminEmail">
+              Email
+              <input
+                id="adminEmail"
+                type="email"
+                autocomplete="username"
+                placeholder="Admin email"
+                required
+              />
+            </label>
+
+            <label for="adminPassword">
+              Password
+              <input
+                id="adminPassword"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Password"
+                required
+              />
+            </label>
+
+            <button id="adminSignIn" type="submit">Sign In</button>
+          </form>
+        </div>
+
+        <div id="signedInAuth" hidden>
+          <p class="sidebar-label">Signed In</p>
+          <strong id="adminIdentity">Tournament administrator</strong>
+          <button id="adminSignOut" class="secondary" type="button">Sign Out</button>
+        </div>
+
+        <p id="authStatus" class="auth-status" aria-live="polite">
+          Checking sign-in status…
+        </p>
+      </section>
+
       <div class="sidebar-status">
         <span id="saveStatus">Ready</span>
-        <span>Autosaves locally</span>
+        <span>Firebase connection enabled</span>
       </div>
     </aside>
 
@@ -48,6 +92,7 @@
         </div>
 
         <div class="header-actions">
+          <span id="headerAuthStatus">View-only mode</span>
           <button id="themeToggle" type="button">Toggle Theme</button>
           <button id="displayModeToggle" type="button">Launch Display</button>
           <button id="resetTournament" class="danger" type="button">Reset</button>
@@ -69,13 +114,40 @@
               </div>
 
               <div class="stats-grid">
-                <div class="stat-card"><span>Teams</span><strong id="statTeams">0</strong></div>
-                <div class="stat-card"><span>Games</span><strong id="statGames">0</strong></div>
-                <div class="stat-card"><span>Rounds</span><strong id="statRounds">0</strong></div>
-                <div class="stat-card"><span>Completed Matches</span><strong id="statCompletedMatches">0</strong></div>
-                <div class="stat-card"><span>Leader</span><strong id="statLeader">—</strong></div>
-                <div class="stat-card"><span>Highest Score</span><strong id="statHighestScore">0</strong></div>
-                <div class="stat-card"><span>Largest Margin</span><strong id="statLargestMargin">0</strong></div>
+                <div class="stat-card">
+                  <span>Teams</span>
+                  <strong id="statTeams">0</strong>
+                </div>
+
+                <div class="stat-card">
+                  <span>Games</span>
+                  <strong id="statGames">0</strong>
+                </div>
+
+                <div class="stat-card">
+                  <span>Rounds</span>
+                  <strong id="statRounds">0</strong>
+                </div>
+
+                <div class="stat-card">
+                  <span>Completed Matches</span>
+                  <strong id="statCompletedMatches">0</strong>
+                </div>
+
+                <div class="stat-card">
+                  <span>Leader</span>
+                  <strong id="statLeader">—</strong>
+                </div>
+
+                <div class="stat-card">
+                  <span>Highest Score</span>
+                  <strong id="statHighestScore">0</strong>
+                </div>
+
+                <div class="stat-card">
+                  <span>Largest Margin</span>
+                  <strong id="statLargestMargin">0</strong>
+                </div>
               </div>
             </section>
 
@@ -106,28 +178,54 @@
 
               <label>
                 Description
-                <textarea id="tournamentDescription" placeholder="Optional tournament notes"></textarea>
+                <textarea
+                  id="tournamentDescription"
+                  placeholder="Optional tournament notes"
+                ></textarea>
               </label>
 
               <label>
                 Tournament Logo URL
-                <input id="tournamentLogoUrl" type="url" placeholder="Optional logo URL" />
+                <input
+                  id="tournamentLogoUrl"
+                  type="url"
+                  placeholder="Optional logo URL"
+                />
               </label>
 
               <label>
                 Banner Image URL
-                <input id="tournamentBannerUrl" type="url" placeholder="Optional banner image URL" />
+                <input
+                  id="tournamentBannerUrl"
+                  type="url"
+                  placeholder="Optional banner image URL"
+                />
               </label>
 
               <label>
                 Accent Colour
-                <input id="tournamentAccentColour" type="color" value="#6d5dfc" />
+                <input
+                  id="tournamentAccentColour"
+                  type="color"
+                  value="#6d5dfc"
+                />
               </label>
 
               <div class="grid three">
-                <label>Win Points <input id="winPoints" type="number" min="1" /></label>
-                <label>Draw Points <input id="drawPoints" type="number" min="0" /></label>
-                <label>Bye Points <input id="byePoints" type="number" min="0" /></label>
+                <label>
+                  Win Points
+                  <input id="winPoints" type="number" min="1" />
+                </label>
+
+                <label>
+                  Draw Points
+                  <input id="drawPoints" type="number" min="0" />
+                </label>
+
+                <label>
+                  Bye Points
+                  <input id="byePoints" type="number" min="0" />
+                </label>
               </div>
 
               <button id="saveTournament" type="button">Save Tournament</button>
@@ -137,13 +235,40 @@
               <h2>Current Tournament</h2>
 
               <dl class="summary-list">
-                <div><dt>Name</dt><dd id="summaryName">—</dd></div>
-                <div><dt>Description</dt><dd id="summaryDescription">—</dd></div>
-                <div><dt>Scoring</dt><dd id="summaryScoring">—</dd></div>
-                <div><dt>Teams</dt><dd id="summaryTeams">0</dd></div>
-                <div><dt>Games</dt><dd id="summaryGames">0</dd></div>
-                <div><dt>Rounds</dt><dd id="summaryRounds">0</dd></div>
-                <div><dt>Branding</dt><dd id="summaryBranding">Default</dd></div>
+                <div>
+                  <dt>Name</dt>
+                  <dd id="summaryName">—</dd>
+                </div>
+
+                <div>
+                  <dt>Description</dt>
+                  <dd id="summaryDescription">—</dd>
+                </div>
+
+                <div>
+                  <dt>Scoring</dt>
+                  <dd id="summaryScoring">—</dd>
+                </div>
+
+                <div>
+                  <dt>Teams</dt>
+                  <dd id="summaryTeams">0</dd>
+                </div>
+
+                <div>
+                  <dt>Games</dt>
+                  <dd id="summaryGames">0</dd>
+                </div>
+
+                <div>
+                  <dt>Rounds</dt>
+                  <dd id="summaryRounds">0</dd>
+                </div>
+
+                <div>
+                  <dt>Branding</dt>
+                  <dd id="summaryBranding">Default</dd>
+                </div>
               </dl>
             </section>
 
@@ -151,16 +276,33 @@
               <div class="section-heading">
                 <div>
                   <h2>Teams</h2>
-                  <p class="muted">Add competitors, colours, short names and optional logo URLs.</p>
+                  <p class="muted">
+                    Add competitors, colours, short names and optional logo URLs.
+                  </p>
                 </div>
-                <button id="clearTeamForm" class="secondary" type="button">Clear Form</button>
+
+                <button id="clearTeamForm" class="secondary" type="button">
+                  Clear Form
+                </button>
               </div>
 
               <div class="team-form">
                 <input id="teamName" type="text" placeholder="Team name" />
-                <input id="teamShortName" type="text" placeholder="Short name optional" />
-                <input id="teamLogoUrl" type="url" placeholder="Logo URL optional" />
+
+                <input
+                  id="teamShortName"
+                  type="text"
+                  placeholder="Short name optional"
+                />
+
+                <input
+                  id="teamLogoUrl"
+                  type="url"
+                  placeholder="Logo URL optional"
+                />
+
                 <input id="teamColour" type="color" value="#6d5dfc" />
+
                 <button id="saveTeam" type="button">Add Team</button>
               </div>
 
@@ -178,14 +320,33 @@
                   <h2>Video Games</h2>
                   <p id="gameCount" class="muted">0 / 5 games added</p>
                 </div>
-                <button id="clearGameForm" class="secondary" type="button">Clear Form</button>
+
+                <button id="clearGameForm" class="secondary" type="button">
+                  Clear Form
+                </button>
               </div>
 
               <div class="game-form">
                 <input id="gameName" type="text" placeholder="Game name" />
-                <input id="gamePlatform" type="text" placeholder="Platform e.g. PC, Switch, PS5" />
-                <input id="gameFormat" type="text" placeholder="Format e.g. 1v1, 2v2, Time Trial" />
-                <input id="gameLogoUrl" type="url" placeholder="Cover/logo URL optional" />
+
+                <input
+                  id="gamePlatform"
+                  type="text"
+                  placeholder="Platform e.g. PC, Switch, PS5"
+                />
+
+                <input
+                  id="gameFormat"
+                  type="text"
+                  placeholder="Format e.g. 1v1, 2v2, Time Trial"
+                />
+
+                <input
+                  id="gameLogoUrl"
+                  type="url"
+                  placeholder="Cover/logo URL optional"
+                />
+
                 <button id="saveGame" type="button">Add Game</button>
               </div>
 
@@ -201,9 +362,14 @@
                 <div>
                   <p class="eyebrow">Schedule</p>
                   <h2>Rounds</h2>
-                  <p id="roundStatus" class="muted">No rounds generated yet.</p>
+                  <p id="roundStatus" class="muted">
+                    No rounds generated yet.
+                  </p>
                 </div>
-                <button id="generateRound" type="button">Generate Next Round</button>
+
+                <button id="generateRound" type="button">
+                  Generate Next Round
+                </button>
               </div>
 
               <div id="roundsContainer" class="rounds-container"></div>
@@ -218,7 +384,9 @@
                 <div>
                   <p class="eyebrow">Standings</p>
                   <h2>Ladder</h2>
-                  <p class="muted">The ladder updates when scores are saved and rounds are completed.</p>
+                  <p class="muted">
+                    The ladder updates when scores are saved and rounds are completed.
+                  </p>
                 </div>
               </div>
 
@@ -226,10 +394,19 @@
                 <table>
                   <thead>
                     <tr>
-                      <th>#</th><th>Team</th><th>Pts</th><th>W</th><th>D</th><th>L</th>
-                      <th>Bye</th><th>PF</th><th>PA</th><th>Diff</th>
+                      <th>#</th>
+                      <th>Team</th>
+                      <th>Pts</th>
+                      <th>W</th>
+                      <th>D</th>
+                      <th>L</th>
+                      <th>Bye</th>
+                      <th>PF</th>
+                      <th>PA</th>
+                      <th>Diff</th>
                     </tr>
                   </thead>
+
                   <tbody id="standingsBody"></tbody>
                 </table>
               </div>
@@ -239,7 +416,10 @@
               <div class="section-heading">
                 <div>
                   <h2>Match History</h2>
-                  <p class="muted">A running record of generated pairings, games, byes and saved results.</p>
+                  <p class="muted">
+                    A running record of generated pairings, games, byes and saved
+                    results.
+                  </p>
                 </div>
               </div>
 
@@ -255,9 +435,18 @@
                 <div>
                   <p class="eyebrow">Reports</p>
                   <h2>Tournament Report</h2>
-                  <p class="muted">Printable report with standings and match history.</p>
+                  <p class="muted">
+                    Printable report with standings and match history.
+                  </p>
                 </div>
-                <button id="printFullReport" type="button" class="secondary">Print Full Report</button>
+
+                <button
+                  id="printFullReport"
+                  type="button"
+                  class="secondary"
+                >
+                  Print Full Report
+                </button>
               </div>
 
               <div id="reportPreview"></div>
@@ -267,21 +456,62 @@
               <div class="section-heading">
                 <div>
                   <h2>Data Tools</h2>
-                  <p class="muted">Back up, restore, print, or export tournament data.</p>
+                  <p class="muted">
+                    Back up, restore, print, or export tournament data.
+                  </p>
                 </div>
               </div>
 
               <div class="button-row">
                 <button id="exportJson" type="button">Export JSON</button>
-                <button id="createRestorePoint" type="button" class="secondary">Create Restore Point</button>
-                <button id="restoreLastPoint" type="button" class="secondary">Restore Last Point</button>
-                <button id="exportStandingsCsv" type="button" class="secondary">Export Standings CSV</button>
-                <button id="exportMatchesCsv" type="button" class="secondary">Export Matches CSV</button>
-                <button id="printReport" type="button" class="secondary">Print Report</button>
+
+                <button
+                  id="createRestorePoint"
+                  type="button"
+                  class="secondary"
+                >
+                  Create Restore Point
+                </button>
+
+                <button
+                  id="restoreLastPoint"
+                  type="button"
+                  class="secondary"
+                >
+                  Restore Last Point
+                </button>
+
+                <button
+                  id="exportStandingsCsv"
+                  type="button"
+                  class="secondary"
+                >
+                  Export Standings CSV
+                </button>
+
+                <button
+                  id="exportMatchesCsv"
+                  type="button"
+                  class="secondary"
+                >
+                  Export Matches CSV
+                </button>
+
+                <button
+                  id="printReport"
+                  type="button"
+                  class="secondary"
+                >
+                  Print Report
+                </button>
 
                 <label class="file-button">
                   Import JSON
-                  <input id="importJson" type="file" accept="application/json,.json" />
+                  <input
+                    id="importJson"
+                    type="file"
+                    accept="application/json,.json"
+                  />
                 </label>
               </div>
             </section>
@@ -295,9 +525,15 @@
                 <div>
                   <p class="eyebrow">Display</p>
                   <h2>Public Display Mode</h2>
-                  <p class="muted">Launch a full-screen display with the clock, top standings, current round and ticker.</p>
+                  <p class="muted">
+                    Launch a full-screen display with the clock, top standings,
+                    current round and ticker.
+                  </p>
                 </div>
-                <button id="displayModeTogglePage" type="button">Launch Display</button>
+
+                <button id="displayModeTogglePage" type="button">
+                  Launch Display
+                </button>
               </div>
             </section>
           </div>
@@ -307,11 +543,17 @@
       </main>
 
       <footer class="app-footer">
-        <span>PHDTournament v1.2</span>
-        <span>Autosaves locally in this browser. Export JSON before clearing browser data.</span>
+        <span>PHDlympics v1.2</span>
+        <span>
+          Authentication enabled. Cloud tournament storage will be activated in
+          the next rollout step.
+        </span>
       </footer>
     </div>
   </div>
+
+  <script src="js/firebase.js"></script>
+  <script src="js/auth.js"></script>
 
   <script src="js/state.js"></script>
   <script src="js/storage.js"></script>
@@ -328,5 +570,134 @@
   <script src="js/reports.js"></script>
   <script src="js/display.js"></script>
   <script src="js/app.js"></script>
+
+  <script>
+    (function initialiseAdminLoginInterface() {
+      const loginForm = document.getElementById("adminLoginForm");
+      const emailInput = document.getElementById("adminEmail");
+      const passwordInput = document.getElementById("adminPassword");
+      const signInButton = document.getElementById("adminSignIn");
+      const signOutButton = document.getElementById("adminSignOut");
+      const signedOutPanel = document.getElementById("signedOutAuth");
+      const signedInPanel = document.getElementById("signedInAuth");
+      const identity = document.getElementById("adminIdentity");
+      const authStatus = document.getElementById("authStatus");
+      const headerAuthStatus = document.getElementById("headerAuthStatus");
+
+      function setAuthenticationMessage(message, isError) {
+        if (!authStatus) return;
+
+        authStatus.textContent = message;
+        authStatus.classList.toggle("error", Boolean(isError));
+      }
+
+      function renderAuthenticationState(authState) {
+        const user = authState && authState.user;
+        const isAdmin = Boolean(authState && authState.isAdmin);
+
+        if (signedOutPanel) {
+          signedOutPanel.hidden = isAdmin;
+        }
+
+        if (signedInPanel) {
+          signedInPanel.hidden = !isAdmin;
+        }
+
+        if (identity) {
+          identity.textContent = user && user.email
+            ? user.email
+            : "Tournament administrator";
+        }
+
+        if (headerAuthStatus) {
+          headerAuthStatus.textContent = isAdmin
+            ? "Administrator mode"
+            : "View-only mode";
+        }
+
+        if (isAdmin) {
+          setAuthenticationMessage("Administrator access active.", false);
+        } else {
+          setAuthenticationMessage(
+            "Sign in to access administrator controls.",
+            false
+          );
+        }
+      }
+
+      if (loginForm) {
+        loginForm.addEventListener("submit", async event => {
+          event.preventDefault();
+
+          const email = emailInput ? emailInput.value : "";
+          const password = passwordInput ? passwordInput.value : "";
+
+          if (signInButton) {
+            signInButton.disabled = true;
+            signInButton.textContent = "Signing In…";
+          }
+
+          setAuthenticationMessage("Signing in…", false);
+
+          try {
+            await signInAdmin(email, password);
+
+            if (passwordInput) {
+              passwordInput.value = "";
+            }
+
+            setAuthenticationMessage(
+              "Administrator access active.",
+              false
+            );
+          } catch (error) {
+            console.error("Administrator sign-in failed.", error);
+
+            setAuthenticationMessage(
+              error && error.message
+                ? error.message
+                : "Could not sign in.",
+              true
+            );
+          } finally {
+            if (signInButton) {
+              signInButton.disabled = false;
+              signInButton.textContent = "Sign In";
+            }
+          }
+        });
+      }
+
+      if (signOutButton) {
+        signOutButton.addEventListener("click", async () => {
+          signOutButton.disabled = true;
+          signOutButton.textContent = "Signing Out…";
+
+          try {
+            await signOutAdmin();
+          } catch (error) {
+            console.error("Administrator sign-out failed.", error);
+
+            setAuthenticationMessage(
+              "Could not sign out. Please try again.",
+              true
+            );
+          } finally {
+            signOutButton.disabled = false;
+            signOutButton.textContent = "Sign Out";
+          }
+        });
+      }
+
+      if (typeof subscribeToAuth === "function") {
+        subscribeToAuth(renderAuthenticationState);
+      } else {
+        setAuthenticationMessage(
+          "Authentication could not be loaded.",
+          true
+        );
+      }
+    })();
+  </script>
 </body>
 </html>
