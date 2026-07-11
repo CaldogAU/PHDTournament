@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PHDlympics</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
   <div id="displayMode" class="display-mode"></div>
@@ -78,8 +79,8 @@
       </section>
 
       <div class="sidebar-status">
-        <span id="saveStatus">Ready</span>
-        <span>Firebase connection enabled</span>
+        <span id="saveStatus">Connecting to cloud…</span>
+        <span>Shared Firebase tournament data</span>
       </div>
     </aside>
 
@@ -88,7 +89,7 @@
         <div>
           <p class="eyebrow">Modern desktop app</p>
           <h2>Control Centre</h2>
-          <p class="lede">A browser-based Swiss-style tournament manager.</p>
+          <p class="lede">A shared, browser-based Swiss-style tournament manager.</p>
         </div>
 
         <div class="header-actions">
@@ -543,10 +544,10 @@
       </main>
 
       <footer class="app-footer">
-        <span>PHDlympics v1.2</span>
+        <span>PHDlympics v1.3</span>
         <span>
-          Authentication enabled. Cloud tournament storage will be activated in
-          the next rollout step.
+          Tournament data is shared through Firebase. Sign in for administrator
+          controls.
         </span>
       </footer>
     </div>
@@ -622,6 +623,10 @@
             "Sign in to access administrator controls.",
             false
           );
+        }
+
+        if (typeof applyAdminAccessState === "function") {
+          applyAdminAccessState();
         }
       }
 
