@@ -1,7 +1,9 @@
 let cloudTournamentUnsubscribe = null;
 let lastCloudState = structuredClone(PHDTournament.defaultState);
 let cloudStateHasLoaded = false;
+let cloudDocumentExists = null;
 let cloudWriteInProgress = false;
+let initialCloudCreationPromise = null;
 
 function mergeTournamentState(sourceState) {
   const source = sourceState || {};
@@ -17,9 +19,15 @@ function mergeTournamentState(sourceState) {
         ...((source.tournament && source.tournament.settings) || {})
       }
     },
-    teams: Array.isArray(source.teams) ? source.teams : [],
-    games: Array.isArray(source.games) ? source.games : [],
-    rounds: Array.isArray(source.rounds) ? source.rounds : []
+    teams: Array.isArray(source.teams)
+      ? source.teams
+      : [],
+    games: Array.isArray(source.games)
+      ? source.games
+      : [],
+    rounds: Array.isArray(source.rounds)
+      ? source.rounds
+      : []
   };
 }
 
@@ -55,22 +63,40 @@ function requireTournamentAdmin() {
 }
 
 function restoreLastCloudState() {
-  PHDTournament.state = mergeTournamentState(lastCloudState);
+  PHDTournament.state =
+    mergeTournamentState(lastCloudState);
 
   if (typeof render === "function") {
     render();
   }
+
+  if (
+    typeof applyAdminAccessState === "function"
+  ) {
+    applyAdminAccessState();
+  }
+}
+
+function getCloudUserDetails() {
+  const user =
+    typeof getSignedInUser === "function"
+      ? getSignedInUser()
+      : null;
+
+  if (!user) {
+    return null;
+  }
+
+  return {
+    uid: user.uid,
+    email: user.email || ""
+  };
 }
 
 async function saveState() {
   requireTournamentAdmin();
 
   const firebase = await PHDFirebase.ready;
-  const user =
-    typeof getSignedInUser === "function"
-      ? getSignedInUser()
-      : null;
-
   const tournamentReference =
     getTournamentDocumentReference(firebase);
 
@@ -78,7 +104,8 @@ async function saveState() {
   setSaveStatus("Saving to cloud...");
 
   try {
-    const stateToSave = cloneStateForCloud();
+    const stateToSave =
+      cloneStateForCloud();
 
     await firebase.firestoreSdk.setDoc(
       tournamentReference,
@@ -86,16 +113,18 @@ async function saveState() {
         state: stateToSave,
         updatedAt:
           firebase.firestoreSdk.serverTimestamp(),
-        updatedBy: user
-          ? {
-              uid: user.uid,
-              email: user.email || ""
-            }
-          : null
+        updatedBy: getCloudUserDetails()
+      },
+      {
+        merge: true
       }
     );
 
-    lastCloudState = mergeTournamentState(stateToSave);
+    lastCloudState =
+      mergeTournamentState(stateToSave);
+
+    cloudDocumentExists = true;
+
     setSaveStatus("Saved to cloud");
   } catch (error) {
     console.error(
@@ -125,48 +154,128 @@ function autosave() {
   });
 }
 
-async function createInitialCloudTournament(firebase) {
+async function createInitialCloudTournament() {
   requireTournamentAdmin();
 
-  const user =
-    typeof getSignedInUser === "function"
-      ? getSignedInUser()
-      : null;
+  if (initialCloudCreationPromise) {
+    return initialCloudCreationPromise;
+  }
 
-  const tournamentReference =
-    getTournamentDocumentReference(firebase);
+  initialCloudCreationPromise =
+    PHDFirebase.ready
+      .then(async firebase => {
+        const tournamentReference =
+          getTournamentDocumentReference(firebase);
 
-  const initialState =
-    mergeTournamentState(PHDTournament.defaultState);
+        const existingSnapshot =
+          await firebase.firestoreSdk.getDoc(
+            tournamentReference
+          );
 
-  await firebase.firestoreSdk.setDoc(
-    tournamentReference,
-    {
-      state: initialState,
-      createdAt:
-        firebase.firestoreSdk.serverTimestamp(),
-      updatedAt:
-        firebase.firestoreSdk.serverTimestamp(),
-      updatedBy: user
-        ? {
-            uid: user.uid,
-            email: user.email || ""
+        if (existingSnapshot.exists()) {
+          cloudDocumentExists = true;
+          return;
+        }
+
+        const initialState =
+          mergeTournamentState(
+            PHDTournament.defaultState
+          );
+
+        await firebase.firestoreSdk.setDoc(
+          tournamentReference,
+          {
+            state: initialState,
+            createdAt:
+              firebase.firestoreSdk.serverTimestamp(),
+            updatedAt:
+              firebase.firestoreSdk.serverTimestamp(),
+            updatedBy: getCloudUserDetails()
           }
-        : null
-    }
-  );
+        );
 
-  lastCloudState = structuredClone(initialState);
+        lastCloudState =
+          structuredClone(initialState);
+
+        cloudDocumentExists = true;
+
+        setSaveStatus(
+          "Cloud tournament created"
+        );
+      })
+      .catch(error => {
+        console.error(
+          "Could not create the initial cloud tournament.",
+          error
+        );
+
+        setSaveStatus(
+          "Cloud tournament creation failed"
+        );
+
+        throw error;
+      })
+      .finally(() => {
+        initialCloudCreationPromise = null;
+      });
+
+  return initialCloudCreationPromise;
+}
+
+async function ensureCloudTournamentExists() {
+  if (
+    typeof isTournamentAdmin !== "function" ||
+    !isTournamentAdmin()
+  ) {
+    return;
+  }
+
+  if (cloudDocumentExists === true) {
+    return;
+  }
+
+  await createInitialCloudTournament();
 }
 
 function applyCloudSnapshot(snapshot) {
+  cloudStateHasLoaded = true;
+  cloudDocumentExists = snapshot.exists();
+
   if (!snapshot.exists()) {
-    cloudStateHasLoaded = true;
+    PHDTournament.state =
+      mergeTournamentState(
+        PHDTournament.defaultState
+      );
+
+    lastCloudState =
+      structuredClone(PHDTournament.state);
+
+    if (typeof render === "function") {
+      render();
+    }
+
+    if (
+      typeof applyAdminAccessState === "function"
+    ) {
+      applyAdminAccessState();
+    }
+
     setSaveStatus("No cloud tournament yet");
+
+    ensureCloudTournamentExists().catch(
+      error => {
+        console.error(
+          "Initial cloud tournament creation failed.",
+          error
+        );
+      }
+    );
+
     return;
   }
 
   const documentData = snapshot.data();
+
   const incomingState =
     documentData && documentData.state
       ? documentData.state
@@ -175,9 +284,10 @@ function applyCloudSnapshot(snapshot) {
   const mergedState =
     mergeTournamentState(incomingState);
 
-  lastCloudState = structuredClone(mergedState);
+  lastCloudState =
+    structuredClone(mergedState);
+
   PHDTournament.state = mergedState;
-  cloudStateHasLoaded = true;
 
   if (
     typeof render === "function" &&
@@ -186,11 +296,18 @@ function applyCloudSnapshot(snapshot) {
     render();
   }
 
+  if (
+    typeof applyAdminAccessState === "function"
+  ) {
+    applyAdminAccessState();
+  }
+
   setSaveStatus("Cloud data loaded");
 }
 
 async function startCloudTournamentListener() {
   const firebase = await PHDFirebase.ready;
+
   const tournamentReference =
     getTournamentDocumentReference(firebase);
 
@@ -202,8 +319,27 @@ async function startCloudTournamentListener() {
   cloudTournamentUnsubscribe =
     firebase.firestoreSdk.onSnapshot(
       tournamentReference,
+      {
+        includeMetadataChanges: true
+      },
       snapshot => {
         applyCloudSnapshot(snapshot);
+
+        if (
+          snapshot.metadata &&
+          snapshot.metadata.hasPendingWrites
+        ) {
+          setSaveStatus(
+            "Syncing cloud changes..."
+          );
+        } else if (
+          snapshot.metadata &&
+          snapshot.metadata.fromCache
+        ) {
+          setSaveStatus(
+            "Showing cached cloud data"
+          );
+        }
       },
       error => {
         console.error(
@@ -211,74 +347,67 @@ async function startCloudTournamentListener() {
           error
         );
 
-        setSaveStatus("Cloud connection failed");
+        setSaveStatus(
+          "Cloud connection failed"
+        );
       }
     );
 }
 
 function loadState() {
   /*
-   * Remove legacy locally stored tournament data.
-   * Theme preference remains local and is handled separately.
+   * Tournament data is no longer loaded from
+   * localStorage. Only interface preferences such
+   * as theme and the active page remain local.
    */
-  localStorage.removeItem(PHDTournament.storageKey);
+  localStorage.removeItem(
+    PHDTournament.storageKey
+  );
+
   localStorage.removeItem(
     `${PHDTournament.storageKey}:restore`
   );
 
   PHDTournament.state =
-    mergeTournamentState(PHDTournament.defaultState);
+    mergeTournamentState(
+      PHDTournament.defaultState
+    );
 
   lastCloudState =
     structuredClone(PHDTournament.state);
 
-  startCloudTournamentListener().catch(error => {
-    console.error(
-      "Could not start cloud tournament storage.",
-      error
-    );
+  setSaveStatus("Connecting to cloud...");
 
-    setSaveStatus("Cloud unavailable");
-  });
+  startCloudTournamentListener().catch(
+    error => {
+      console.error(
+        "Could not start cloud tournament storage.",
+        error
+      );
+
+      setSaveStatus("Cloud unavailable");
+    }
+  );
 
   if (
     typeof subscribeToAuth === "function"
   ) {
-    subscribeToAuth(async authState => {
+    subscribeToAuth(authState => {
       if (
         !authState ||
-        !authState.isAdmin ||
-        cloudStateHasLoaded
+        !authState.isAdmin
       ) {
         return;
       }
 
-      try {
-        const firebase = await PHDFirebase.ready;
-        const tournamentReference =
-          getTournamentDocumentReference(firebase);
-
-        const snapshot =
-          await firebase.firestoreSdk.getDoc(
-            tournamentReference
-          );
-
-        if (!snapshot.exists()) {
-          await createInitialCloudTournament(firebase);
-          setSaveStatus(
-            "Cloud tournament created"
+      ensureCloudTournamentExists().catch(
+        error => {
+          console.error(
+            "Could not ensure the cloud tournament exists.",
+            error
           );
         }
-      } catch (error) {
-        console.error(
-          "Could not create the initial cloud tournament.",
-          error
-        );
-
-        setSaveStatus(
-          "Cloud tournament creation failed"
-        );
-      }
+      );
     });
   }
 }
@@ -287,10 +416,15 @@ function resetState() {
   requireTournamentAdmin();
 
   PHDTournament.state =
-    mergeTournamentState(PHDTournament.defaultState);
+    mergeTournamentState(
+      PHDTournament.defaultState
+    );
 
   autosave();
-  setSaveStatus("Resetting cloud tournament");
+
+  setSaveStatus(
+    "Resetting cloud tournament"
+  );
 }
 
 function saveThemePreference(theme) {
@@ -302,7 +436,9 @@ function saveThemePreference(theme) {
 
 function loadThemePreference() {
   const savedTheme =
-    localStorage.getItem(PHDTournament.themeKey);
+    localStorage.getItem(
+      PHDTournament.themeKey
+    );
 
   if (savedTheme === "dark") {
     document.body.classList.add("dark");
@@ -313,11 +449,8 @@ async function createRestorePoint() {
   try {
     requireTournamentAdmin();
 
-    const firebase = await PHDFirebase.ready;
-    const user =
-      typeof getSignedInUser === "function"
-        ? getSignedInUser()
-        : null;
+    const firebase =
+      await PHDFirebase.ready;
 
     const restoreReference =
       getRestoreDocumentReference(firebase);
@@ -332,12 +465,8 @@ async function createRestorePoint() {
         state: cloneStateForCloud(),
         createdAt:
           firebase.firestoreSdk.serverTimestamp(),
-        createdBy: user
-          ? {
-              uid: user.uid,
-              email: user.email || ""
-            }
-          : null
+        createdBy:
+          getCloudUserDetails()
       }
     );
 
@@ -376,7 +505,9 @@ async function restoreLastPoint() {
 
     if (!confirmed) return;
 
-    const firebase = await PHDFirebase.ready;
+    const firebase =
+      await PHDFirebase.ready;
+
     const restoreReference =
       getRestoreDocumentReference(firebase);
 
@@ -389,10 +520,12 @@ async function restoreLastPoint() {
       alert(
         "No cloud restore point was found."
       );
+
       return;
     }
 
-    const restoreData = snapshot.data();
+    const restoreData =
+      snapshot.data();
 
     if (
       !restoreData ||
@@ -401,6 +534,7 @@ async function restoreLastPoint() {
       alert(
         "The cloud restore point is invalid."
       );
+
       return;
     }
 
@@ -413,6 +547,12 @@ async function restoreLastPoint() {
 
     if (typeof render === "function") {
       render();
+    }
+
+    if (
+      typeof applyAdminAccessState === "function"
+    ) {
+      applyAdminAccessState();
     }
 
     setSaveStatus(
@@ -437,5 +577,19 @@ async function restoreLastPoint() {
     );
   }
 }
+
+function isCloudStateLoaded() {
+  return cloudStateHasLoaded;
+}
+
+function doesCloudTournamentExist() {
+  return cloudDocumentExists === true;
+}
+
+window.isCloudStateLoaded =
+  isCloudStateLoaded;
+
+window.doesCloudTournamentExist =
+  doesCloudTournamentExist;
 
 PHDTournament.modules.push("storage");
