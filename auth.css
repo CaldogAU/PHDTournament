@@ -1,0 +1,282 @@
+/* =========================================================
+   PHDlympics authentication and access-control interface
+   ========================================================= */
+
+.auth-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.auth-panel form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-panel label {
+  margin: 0;
+  color: var(--sidebar-muted);
+  font-size: 13px;
+}
+
+.auth-panel input {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--sidebar-text);
+}
+
+.auth-panel input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.auth-panel input:focus {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.auth-panel button {
+  width: 100%;
+}
+
+.auth-panel [hidden] {
+  display: none !important;
+}
+
+#signedInAuth {
+  display: grid;
+  gap: 12px;
+}
+
+#adminIdentity {
+  display: block;
+  color: var(--sidebar-text);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.auth-status {
+  min-height: 18px;
+  margin: 0;
+  color: var(--sidebar-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.auth-status.error {
+  color: #fca5a5;
+}
+
+#headerAuthStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+body.admin-mode #headerAuthStatus {
+  background: rgba(22, 163, 74, 0.24);
+  border-color: rgba(187, 247, 208, 0.42);
+}
+
+body.view-only-mode #headerAuthStatus {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(253, 230, 138, 0.44);
+}
+
+#viewOnlyNotice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+#viewOnlyNotice::before {
+  content: "View only";
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-control-locked {
+  cursor: not-allowed !important;
+}
+
+button.admin-control-locked,
+input.admin-control-locked,
+textarea.admin-control-locked,
+select.admin-control-locked {
+  opacity: 0.55;
+}
+
+button.admin-control-locked {
+  filter: grayscale(0.25);
+}
+
+input.admin-control-locked,
+textarea.admin-control-locked,
+select.admin-control-locked {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      var(--card-soft),
+      var(--card-soft) 8px,
+      var(--card) 8px,
+      var(--card) 16px
+    );
+  color: var(--muted);
+}
+
+.file-button.admin-control-locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+body.view-only-mode #adminTab .card:first-child,
+body.view-only-mode #gamesTab .card,
+body.view-only-mode #scheduleTab .card {
+  position: relative;
+}
+
+body.view-only-mode #adminTab .card:first-child::after,
+body.view-only-mode #gamesTab .card::after,
+body.view-only-mode #scheduleTab .card::after {
+  content: "Administrator access required to make changes";
+  display: block;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--card-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+body.view-only-mode .match-actions:empty {
+  display: none;
+}
+
+body.view-only-mode .team-actions:empty,
+body.view-only-mode .game-actions:empty {
+  display: none;
+}
+
+body.view-only-mode .match-card input:disabled,
+body.view-only-mode .match-card select:disabled,
+body.view-only-mode .match-card textarea:disabled {
+  pointer-events: none;
+}
+
+body.view-only-mode button[data-admin-locked="true"] {
+  pointer-events: none;
+}
+
+body.view-only-mode input[data-admin-locked="true"],
+body.view-only-mode textarea[data-admin-locked="true"],
+body.view-only-mode select[data-admin-locked="true"] {
+  user-select: none;
+}
+
+body.admin-mode .admin-control-locked {
+  opacity: 1;
+  cursor: initial;
+  filter: none;
+}
+
+body.admin-mode input.admin-control-locked,
+body.admin-mode textarea.admin-control-locked,
+body.admin-mode select.admin-control-locked {
+  background: var(--card);
+  color: var(--text);
+}
+
+body.dark .auth-panel {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark #viewOnlyNotice {
+  background: rgba(109, 93, 252, 0.14) !important;
+}
+
+body.dark input.admin-control-locked,
+body.dark textarea.admin-control-locked,
+body.dark select.admin-control-locked {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      var(--card-soft),
+      var(--card-soft) 8px,
+      var(--card) 8px,
+      var(--card) 16px
+    );
+}
+
+@media (max-width: 1200px) {
+  #headerAuthStatus {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 950px) {
+  .auth-panel {
+    grid-column: 1 / -1;
+  }
+
+  #signedOutAuth form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  #signedOutAuth form button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  #signedOutAuth form {
+    grid-template-columns: 1fr;
+  }
+
+  #viewOnlyNotice {
+    margin: 16px 16px 0 !important;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #headerAuthStatus {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media print {
+  .auth-panel,
+  #headerAuthStatus,
+  #viewOnlyNotice {
+    display: none !important;
+  }
+
+  .admin-control-locked {
+    opacity: 1 !important;
+  }
+}
