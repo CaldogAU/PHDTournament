@@ -1244,3 +1244,164 @@ body.display-active .display-mode {
     margin-top: 24px;
   }
 }
+
+.audit-log-panel[hidden] {
+  display: none !important;
+}
+
+.audit-log-container {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.audit-entry {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 18px;
+  background: var(--card-soft);
+}
+
+.audit-entry-team {
+  border-left-color: #2563eb;
+}
+
+.audit-entry-game {
+  border-left-color: #7c3aed;
+}
+
+.audit-entry-round {
+  border-left-color: #d97706;
+}
+
+.audit-entry-match {
+  border-left-color: #16a34a;
+}
+
+.audit-entry-backup {
+  border-left-color: #0891b2;
+}
+
+.audit-entry-tournament {
+  border-left-color: var(--accent);
+}
+
+.audit-entry-marker {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(109, 93, 252, 0.12);
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.audit-entry-content {
+  min-width: 0;
+}
+
+.audit-entry-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.audit-entry-heading strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.audit-entry-heading p {
+  margin-bottom: 0;
+  color: var(--text);
+}
+
+.audit-entry-heading time {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.audit-entry-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.audit-entry-meta span {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(102, 112, 133, 0.12);
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.audit-entry-details {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.audit-entry-details summary {
+  padding: 10px 12px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.audit-entry-details pre {
+  max-height: 360px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  background: var(--card-soft);
+  color: var(--text);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#auditLogStatus.error {
+  color: var(--danger);
+}
+
+body.dark .audit-entry-marker {
+  background: rgba(109, 93, 252, 0.2);
+}
+
+@media (max-width: 700px) {
+  .audit-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-entry-heading {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .audit-entry-heading time {
+    white-space: normal;
+  }
+}
+
+@media print {
+  .audit-log-panel {
+    display: none !important;
+  }
+}
