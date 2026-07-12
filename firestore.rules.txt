@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isTournamentAdmin() {
+      return isSignedIn()
+        && request.auth.uid == "prUrxokN7YQbloBefGQHMTQEPjJ3";
+    }
+
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow create, update, delete: if isTournamentAdmin();
+    }
+
+    match /backups/{backupId} {
+      allow read, create, update, delete: if isTournamentAdmin();
+    }
+
+    match /auditLogs/{auditId} {
+      allow read: if isTournamentAdmin();
+
+      allow create: if isTournamentAdmin()
+        && request.resource.data.adminUid == request.auth.uid
+        && request.resource.data.action is string
+        && request.resource.data.action.size() > 0
+        && request.resource.data.summary is string
+        && request.resource.data.summary.size() > 0
+        && request.resource.data.tournamentDocument == "current";
+
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
