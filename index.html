@@ -324,33 +324,52 @@
                   Clear Form
                 </button>
               </div>
+              
+                        <div class="game-form">
+            <input
+              id="gameName"
+              type="text"
+              placeholder="Game name"
+            />
 
-              <div class="game-form">
-                <input id="gameName" type="text" placeholder="Game name" />
+            <input
+              id="gamePlatform"
+              type="text"
+              placeholder="Platform e.g. PC, Switch, PS5"
+            />
 
-                <input
-                  id="gamePlatform"
-                  type="text"
-                  placeholder="Platform e.g. PC, Switch, PS5"
-                />
+            <select id="gameMode">
+              <option value="swiss">
+                Swiss Tournament
+              </option>
 
-                <input
-                  id="gameFormat"
-                  type="text"
-                  placeholder="Format e.g. 1v1, 2v2, Time Trial"
-                />
+              <option value="time-trial">
+                Time Trial
+              </option>
 
-                <input
-                  id="gameLogoUrl"
-                  type="url"
-                  placeholder="Cover/logo URL optional"
-                />
+              <option value="grand-prix">
+                Grand Prix
+              </option>
+            </select>
 
-                <button id="saveGame" type="button">Add Game</button>
-              </div>
+            <input
+              id="gameFormat"
+              type="text"
+              placeholder="Format e.g. 1v1, 2v2, Teams"
+            />
 
-              <ul id="gameList" class="game-list"></ul>
-            </section>
+            <input
+              id="gameLogoUrl"
+              type="url"
+              placeholder="Cover/logo URL optional"
+            />
+
+            <button
+              id="saveGame"
+              type="button"
+            >
+              Add Game
+            </button>
           </div>
         </section>
 
