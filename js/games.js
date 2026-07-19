@@ -25,10 +25,11 @@ function getGameLabel(gameId) {
 function clearGameForm() {
   PHDTournament.editingGameId = null;
 
-  setValue("gameName", "");
-  setValue("gamePlatform", "");
-  setValue("gameFormat", "");
-  setValue("gameLogoUrl", "");
+setValue("gameName", "");
+setValue("gamePlatform", "");
+setValue("gameMode", "swiss");
+setValue("gameFormat", "");
+setValue("gameLogoUrl", "");
 
   const saveButton =
     getElement("saveGame");
@@ -40,13 +41,14 @@ function clearGameForm() {
 
 function createGame(values) {
   return {
-    id: crypto.randomUUID(),
-    name: values.name,
-    platform: values.platform,
-    format: values.format,
-    logoUrl: values.logoUrl,
-    createdAt: new Date().toISOString()
-  };
+  id: crypto.randomUUID(),
+  name: values.name,
+  platform: values.platform,
+  mode: values.mode,
+  format: values.format,
+  logoUrl: values.logoUrl,
+  createdAt: new Date().toISOString()
+};
 }
 
 function getGameAuditDetails(game) {
@@ -54,6 +56,7 @@ function getGameAuditDetails(game) {
     gameId: game.id,
     name: game.name,
     platform: game.platform || "",
+    mode: game.mode || "swiss",
     format: game.format || "",
     logoUrl: game.logoUrl || "",
     createdAt: game.createdAt || ""
@@ -67,11 +70,12 @@ function getGameChanges(
   const changes = {};
 
   [
-    "name",
-    "platform",
-    "format",
-    "logoUrl"
-  ].forEach(field => {
+  "name",
+  "platform",
+  "mode",
+  "format",
+  "logoUrl"
+].forEach(field => {
     const previousValue =
       previousGame[field] || "";
 
@@ -93,15 +97,21 @@ function getGameChanges(
 
 async function saveGameFromForm() {
   const values = {
-    name:
-      getValue("gameName").trim(),
-    platform:
-      getValue("gamePlatform").trim(),
-    format:
-      getValue("gameFormat").trim(),
-    logoUrl:
-      getValue("gameLogoUrl").trim()
-  };
+  name:
+    getValue("gameName").trim(),
+
+  platform:
+    getValue("gamePlatform").trim(),
+
+  mode:
+    getValue("gameMode") || "swiss",
+
+  format:
+    getValue("gameFormat").trim(),
+
+  logoUrl:
+    getValue("gameLogoUrl").trim()
+};
 
   if (isBlank(values.name)) {
     alert("Enter a game name.");
@@ -154,10 +164,11 @@ async function saveGameFromForm() {
     const previousGame =
       structuredClone(game);
 
-    game.name = values.name;
-    game.platform = values.platform;
-    game.format = values.format;
-    game.logoUrl = values.logoUrl;
+game.name = values.name;
+game.platform = values.platform;
+game.mode = values.mode;
+game.format = values.format;
+game.logoUrl = values.logoUrl;
 
     auditAction = "game.updated";
     auditSummary =
@@ -233,14 +244,19 @@ function editGame(gameId) {
   );
 
   setValue(
-    "gamePlatform",
-    game.platform || ""
-  );
+  "gamePlatform",
+  game.platform || ""
+);
 
-  setValue(
-    "gameFormat",
-    game.format || ""
-  );
+setValue(
+  "gameMode",
+  game.mode || "swiss"
+);
+
+setValue(
+  "gameFormat",
+  game.format || ""
+);
 
   setValue(
     "gameLogoUrl",
