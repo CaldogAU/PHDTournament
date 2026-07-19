@@ -166,4 +166,158 @@ function renderEvents() {
       .join("");
 }
 
+function getEventAuditDetails(event) {
+  return {
+    eventId: event.id,
+    gameId: event.gameId,
+    mode: event.mode,
+    completed: Boolean(event.completed),
+    createdAt: event.createdAt || "",
+    resultCount: Array.isArray(event.results)
+      ? event.results.length
+      : 0
+  };
+}
+
+async function createEvent() {
+  if (
+    typeof requireAdminForAction ===
+      "function" &&
+    !requireAdminForAction()
+  ) {
+    return;
+  }
+
+  const select =
+    getElement("eventGameSelect");
+
+  if (!select) {
+    return;
+  }
+
+  const gameId =
+    select.value;
+
+  if (!gameId) {
+    alert(
+      "Select a Time Trial or Grand Prix game first."
+    );
+
+    return;
+  }
+
+  const game =
+    getGameById(gameId);
+
+  if (!game) {
+    alert(
+      "The selected game could not be found."
+    );
+
+    return;
+  }
+
+  const mode =
+    game.mode || "swiss";
+
+  if (
+    mode !== "time-trial" &&
+    mode !== "grand-prix"
+  ) {
+    alert(
+      "Only Time Trial and Grand Prix games can create events."
+    );
+
+    return;
+  }
+
+  if (getEventByGameId(gameId)) {
+    alert(
+      "An event already exists for this game."
+    );
+
+    return;
+  }
+
+  const event = {
+    id: crypto.randomUUID(),
+    gameId,
+    mode,
+    completed: false,
+    createdAt:
+      new Date().toISOString(),
+    updatedAt:
+      new Date().toISOString(),
+    results: []
+  };
+
+  PHDTournament.state.events.push(
+    event
+  );
+
+  select.value = "";
+
+  render();
+
+  try {
+    await saveState();
+
+    if (
+      typeof recordAuditEntry ===
+      "function"
+    ) {
+      await recordAuditEntry(
+        "event.created",
+        `Created ${getGameModeLabel(
+          game
+        )} event for ${game.name}.`,
+        {
+          event:
+            getEventAuditDetails(
+              event
+            )
+        }
+      );
+    }
+  } catch (error) {
+    PHDTournament.state.events =
+      PHDTournament.state.events.filter(
+        existingEvent =>
+          existingEvent.id !== event.id
+      );
+
+    render();
+
+    console.error(
+      "The event could not be saved.",
+      error
+    );
+
+    alert(
+      error && error.message
+        ? error.message
+        : "The event could not be saved."
+    );
+  }
+}
+
+function initialiseEventControls() {
+  const createButton =
+    getElement("createEvent");
+
+  if (!createButton) {
+    return;
+  }
+
+  createButton.addEventListener(
+    "click",
+    createEvent
+  );
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initialiseEventControls
+);
+
 PHDTournament.modules.push("events");
