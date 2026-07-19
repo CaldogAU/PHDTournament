@@ -478,14 +478,24 @@ function renderGames() {
 }
 
 function buildGameOptions(
-  selectedGameId = ""
+  selectedGameId = "",
+  requiredModeId = ""
 ) {
-  const games = getGames();
+  const games = getGames().filter(
+    game =>
+      !requiredModeId ||
+      (game.mode || "swiss") ===
+        requiredModeId
+  );
 
   if (games.length === 0) {
     return `
       <option value="">
-        No games added
+        ${
+          requiredModeId === "swiss"
+            ? "No Swiss games added"
+            : "No games added"
+        }
       </option>
     `;
   }

@@ -912,10 +912,10 @@ function renderRounds() {
                     Game
 
                     <select class="match-game-select">
-                      ${buildGameOptions(
-                        match.gameId ||
-                          ""
-                      )}
+                     ${buildGameOptions(
+  match.gameId || "",
+  "swiss"
+)}
                     </select>
                   </label>
 
