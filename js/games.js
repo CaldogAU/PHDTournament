@@ -375,6 +375,23 @@ function renderGameLogo(game) {
   );
 }
 
+function getGameModeLabel(game) {
+  if (
+    window.PHDGameModes &&
+    typeof window.PHDGameModes.getForGame ===
+      "function"
+  ) {
+    const mode =
+      window.PHDGameModes.getForGame(game);
+
+    if (mode && mode.name) {
+      return mode.name;
+    }
+  }
+
+  return "Swiss";
+}
+
 function renderGames() {
   const list =
     getElement("gameList");
@@ -417,18 +434,24 @@ function renderGames() {
             </strong>
 
             <span>
-              ${escapeHtml(
-                game.platform ||
-                  "No platform listed"
-              )}
-            </span>
+  ${escapeHtml(
+    game.platform ||
+      "No platform listed"
+  )}
+</span>
 
-            <span>
-              ${escapeHtml(
-                game.format ||
-                  "No format listed"
-              )}
-            </span>
+<span>
+  Mode: ${escapeHtml(
+    getGameModeLabel(game)
+  )}
+</span>
+
+<span>
+  ${escapeHtml(
+    game.format ||
+      "No format listed"
+  )}
+</span>
           </div>
 
           <div class="game-actions">
