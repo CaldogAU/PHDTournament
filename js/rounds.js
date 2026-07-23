@@ -5,6 +5,11 @@ function createSwissPairings(
     context.state ||
     PHDTournament.state;
   const teams = state.teams;
+  const gameId =
+    context.gameId || "";
+  const rounds = gameId
+    ? getRoundsForGame(gameId)
+    : state.rounds;
 
   if (teams.length < 2) {
     alert(
@@ -19,8 +24,9 @@ function createSwissPairings(
       teams,
       standings:
         context.standings ||
-        getStandings(),
-      rounds: state.rounds,
+        getStandings(gameId),
+      rounds,
+      gameId,
       createId: () =>
         crypto.randomUUID(),
       now: () =>
@@ -34,6 +40,53 @@ function getRoundById(roundId) {
       round => round.id === roundId
     ) || null
   );
+}
+
+function getRoundGameId(round) {
+  if (!round) {
+    return "";
+  }
+
+  if (round.gameId) {
+    return round.gameId;
+  }
+
+  const assignedMatch =
+    Array.isArray(round.matches)
+      ? round.matches.find(
+          match => match.gameId
+        )
+      : null;
+
+  return assignedMatch
+    ? assignedMatch.gameId
+    : "";
+}
+
+function getRoundsForGame(gameId) {
+  return PHDTournament.state.rounds
+    .map(round => {
+      const roundGameId =
+        round.gameId || "";
+      const matches =
+        round.matches.filter(
+          match =>
+            match.gameId === gameId ||
+            (
+              match.bye &&
+              roundGameId === gameId
+            )
+        );
+
+      return {
+        ...round,
+        matches
+      };
+    })
+    .filter(
+      round =>
+        round.matches.length > 0
+    );
 }
 
 function getMatch(
@@ -144,11 +197,25 @@ function getMatchAuditDetails(
   };
 }
 
-async function generateRound() {
-  const latestRound =
-    PHDTournament.state.rounds.at(
-      -1
+async function generateRound(gameId) {
+  const game =
+    getGameById(gameId);
+
+  if (
+    !game ||
+    (game.mode || "swiss") !==
+      "swiss"
+  ) {
+    alert(
+      "Select a Swiss game before generating a round."
     );
+    return;
+  }
+
+  const gameRounds =
+    getRoundsForGame(gameId);
+  const latestRound =
+    gameRounds.at(-1);
 
   if (
     latestRound &&
@@ -168,7 +235,8 @@ async function generateRound() {
           .DEFAULT_MODE_ID,
         {
           state:
-            PHDTournament.state
+            PHDTournament.state,
+          gameId
         }
       );
 
@@ -278,7 +346,7 @@ async function saveMatchScore(
   match.gameId =
     gameSelect
       ? gameSelect.value
-      : "";
+      : match.gameId;
 
   match.completed = true;
   match.updatedAt =
@@ -531,15 +599,51 @@ function renderMatchTeam(team) {
   `;
 }
 
-function renderRounds() {
+function renderSwissGameManagement(
+  game
+) {
+  return `
+    <section class="card wide">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">
+            Swiss Tournament
+          </p>
+          <h2>Rounds</h2>
+          <p
+            id="roundStatus-${game.id}"
+            class="muted"
+          >
+            No rounds generated yet.
+          </p>
+        </div>
+
+        <button
+          class="generate-game-round"
+          type="button"
+          data-game-id="${game.id}"
+        >
+          Generate Next Round
+        </button>
+      </div>
+
+      <div
+        id="roundsContainer-${game.id}"
+        class="rounds-container"
+      ></div>
+    </section>
+  `;
+}
+
+function renderRounds(gameId) {
   const status =
     document.getElementById(
-      "roundStatus"
+      `roundStatus-${gameId}`
     );
 
   const container =
     document.getElementById(
-      "roundsContainer"
+      `roundsContainer-${gameId}`
     );
 
   if (!status || !container) {
@@ -547,10 +651,11 @@ function renderRounds() {
   }
 
   container.innerHTML = "";
+  const rounds =
+    getRoundsForGame(gameId);
 
   if (
-    PHDTournament.state.rounds
-      .length === 0
+    rounds.length === 0
   ) {
     status.textContent =
       "No rounds generated yet.";
@@ -565,16 +670,16 @@ function renderRounds() {
   }
 
   const completedRounds =
-    PHDTournament.state.rounds.filter(
+    rounds.filter(
       round => round.completed
     ).length;
 
   status.textContent =
     `${completedRounds} of ` +
-    `${PHDTournament.state.rounds.length} ` +
+    `${rounds.length} ` +
     "rounds completed.";
 
-  PHDTournament.state.rounds.forEach(
+  rounds.forEach(
     round => {
       const card =
         document.createElement(
@@ -634,16 +739,13 @@ function renderRounds() {
                 </div>
 
                 <div class="match-middle">
-                  <label class="match-game-label">
-                    Game
-
-                    <select class="match-game-select">
-                     ${buildGameOptions(
-  match.gameId || "",
-  "swiss"
-)}
-                    </select>
-                  </label>
+                  <span class="match-game-label">
+                    ${escapeHtml(
+                      getGameLabel(
+                        gameId
+                      )
+                    )}
+                  </span>
 
                   <div class="score-box">
                     <input

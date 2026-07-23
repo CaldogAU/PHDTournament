@@ -45,3 +45,55 @@ test("loads tournament engines before their workflow adapters", () => {
     gameModesIndex < roundsIndex
   );
 });
+
+test("keeps mode management on game pages", () => {
+  const root = path.join(
+    __dirname,
+    ".."
+  );
+  const html = fs.readFileSync(
+    path.join(root, "index.html"),
+    "utf8"
+  );
+  const app = fs.readFileSync(
+    path.join(root, "js", "app.js"),
+    "utf8"
+  );
+  const events = fs.readFileSync(
+    path.join(
+      root,
+      "js",
+      "events.js"
+    ),
+    "utf8"
+  );
+
+  assert.equal(
+    html.includes(
+      'id="scheduleTab"'
+    ),
+    false
+  );
+  assert.equal(
+    html.includes(
+      'id="eventsTab"'
+    ),
+    false
+  );
+  assert.match(
+    app,
+    /renderSwissGameManagement/
+  );
+  assert.match(
+    app,
+    /renderEventGameManagement/
+  );
+  assert.match(
+    events,
+    /saveTimeTrialResults/
+  );
+  assert.match(
+    events,
+    /saveGrandPrixResults/
+  );
+});

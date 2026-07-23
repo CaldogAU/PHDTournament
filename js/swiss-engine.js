@@ -209,14 +209,15 @@
     teamAId,
     teamBId,
     roundNumber,
-    createId
+    createId,
+    gameId
   ) {
     return {
       id: createId(),
       roundNumber,
       teamAId,
       teamBId,
-      gameId: "",
+      gameId: gameId || "",
       bye: false,
       completed: false,
       scoreA: null,
@@ -230,14 +231,16 @@
     team,
     roundNumber,
     createId,
-    now
+    now,
+    gameId
   ) {
     return {
       ...createMatch(
         team.id,
         null,
         roundNumber,
-        createId
+        createId,
+        gameId
       ),
       bye: true,
       completed: true,
@@ -253,6 +256,7 @@
       rounds = [],
       roundNumber =
         rounds.length + 1,
+      gameId = "",
       createId,
       now
     } = options || {};
@@ -314,7 +318,8 @@
           byeTeam,
           roundNumber,
           createId,
-          now
+          now,
+          gameId
         )
       );
 
@@ -346,7 +351,8 @@
             pair.teamA.id,
             pair.teamB.id,
             roundNumber,
-            createId
+            createId,
+            gameId
           )
         );
       });
@@ -364,6 +370,7 @@
     return {
       id: createId(),
       number: roundNumber,
+      gameId,
       completed: false,
       createdAt: now(),
       matches

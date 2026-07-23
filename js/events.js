@@ -252,112 +252,180 @@ function renderTimeTrialEntries(
   `;
 }
 
-function renderEvents() {
-  const status =
-    getElement("eventStatus");
+function renderGrandPrixEntries(
+  event
+) {
+  const teams =
+    PHDTournament.state.teams;
 
-  const container =
-    getElement("eventsContainer");
-
-  if (!status || !container) {
-    return;
-  }
-
-  renderEventGameOptions();
-
-  const events =
-    PHDTournament.state.events;
-
-  if (events.length === 0) {
-    status.textContent =
-      "No non-Swiss events created yet.";
-
-    container.innerHTML = `
+  if (teams.length === 0) {
+    return `
       <div class="empty-state">
-        Add a Time Trial or Grand Prix game,
-        then select it above to create its event.
+        Add teams before entering Grand Prix results.
       </div>
     `;
-
-    return;
   }
 
-  const completedEvents =
-    events.filter(
-      event => event.completed
-    ).length;
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Finishing Position</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${teams.map(team => {
+            const result =
+              getEventResultForTeam(
+                event,
+                team.id
+              );
 
-  status.textContent =
-    `${completedEvents} of ` +
-    `${events.length} events completed.`;
-
-  container.innerHTML =
-    events
-      .map(event => {
-        const game =
-          getGameById(event.gameId);
-
-        const gameName =
-          game
-            ? game.name
-            : "Unknown game";
-
-        const modeName =
-          game
-            ? getGameModeLabel(game)
-            : event.mode || "Unknown";
-
-        return `
-  <article class="round-card">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">
-          ${escapeHtml(modeName)}
-        </p>
-
-        <h3>
-          ${escapeHtml(gameName)}
-        </h3>
-
-        <p class="muted">
-          ${
-            event.completed
-              ? "Event completed"
-              : "Event awaiting results"
-          }
-        </p>
-      </div>
-
-      <span
-        class="status-pill ${
-          event.completed
-            ? "completed"
-            : "open"
-        }"
-      >
-        ${
-          event.completed
-            ? "Completed"
-            : "Open"
-        }
-      </span>
+            return `
+              <tr
+                data-event-id="${event.id}"
+                data-team-id="${team.id}"
+              >
+                <td>
+                  <strong>
+                    ${escapeHtml(team.name)}
+                  </strong>
+                </td>
+                <td>
+                  <input
+                    class="finish-position"
+                    type="number"
+                    min="1"
+                    max="${teams.length}"
+                    step="1"
+                    value="${
+                      result
+                        ? result.finishPosition
+                        : ""
+                    }"
+                    ${
+                      event.completed
+                        ? "disabled"
+                        : ""
+                    }
+                  />
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
     </div>
 
     ${
-      event.mode === "time-trial"
-        ? renderTimeTrialEntries(
-            event
-          )
+      event.completed
+        ? ""
         : `
-          <div class="empty-state">
-            Grand Prix result entry will be added next.
+          <div class="button-row">
+            <button
+              class="save-grand-prix-results"
+              type="button"
+              data-event-id="${event.id}"
+            >
+              Save Finishing Order
+            </button>
           </div>
         `
     }
-  </article>
-`;
-      })
-      .join("");
+  `;
+}
+
+function renderEventGameManagement(
+  game
+) {
+  const event =
+    getEventByGameId(game.id);
+  const modeName =
+    getGameModeLabel(game);
+
+  if (!event) {
+    return `
+      <section class="card wide">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">
+              ${escapeHtml(modeName)}
+            </p>
+            <h2>Event Management</h2>
+            <p class="muted">
+              Create this event to begin entering results.
+            </p>
+          </div>
+          <button
+            class="create-game-event"
+            type="button"
+            data-game-id="${game.id}"
+          >
+            Create Event
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section
+      class="card wide"
+      data-event-workspace="${event.id}"
+    >
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">
+            ${escapeHtml(modeName)}
+          </p>
+          <h2>Event Management</h2>
+          <p class="muted">
+            ${
+              event.completed
+                ? "Results completed"
+                : "Enter results for every team"
+            }
+          </p>
+        </div>
+        <div class="button-row">
+          <span
+            class="status-pill ${
+              event.completed
+                ? "completed"
+                : "open"
+            }"
+          >
+            ${
+              event.completed
+                ? "Completed"
+                : "Open"
+            }
+          </span>
+          ${
+            event.completed
+              ? `
+                <button
+                  class="secondary reopen-game-event"
+                  type="button"
+                  data-event-id="${event.id}"
+                >
+                  Reopen Results
+                </button>
+              `
+              : ""
+          }
+        </div>
+      </div>
+
+      ${
+        event.mode === "time-trial"
+          ? renderTimeTrialEntries(event)
+          : renderGrandPrixEntries(event)
+      }
+    </section>
+  `;
 }
 
 function getEventAuditDetails(event) {
@@ -373,7 +441,7 @@ function getEventAuditDetails(event) {
   };
 }
 
-async function createEvent() {
+async function createEvent(gameId) {
   if (
     typeof requireAdminForAction ===
       "function" &&
@@ -382,19 +450,9 @@ async function createEvent() {
     return;
   }
 
-  const select =
-    getElement("eventGameSelect");
-
-  if (!select) {
-    return;
-  }
-
-  const gameId =
-    select.value;
-
   if (!gameId) {
     alert(
-      "Select a Time Trial or Grand Prix game first."
+      "The game could not be identified."
     );
 
     return;
@@ -449,8 +507,6 @@ async function createEvent() {
     event
   );
 
-  select.value = "";
-
   render();
 
   try {
@@ -495,17 +551,279 @@ async function createEvent() {
   }
 }
 
-function initialiseEventControls() {
-  const createButton =
-    getElement("createEvent");
+function getEventById(eventId) {
+  return (
+    PHDTournament.state.events.find(
+      event => event.id === eventId
+    ) || null
+  );
+}
 
-  if (!createButton) {
+async function persistEventResults(
+  event,
+  results,
+  summary
+) {
+  const previousEvent =
+    structuredClone(event);
+
+  event.results = results;
+  event.completed = true;
+  event.updatedAt =
+    new Date().toISOString();
+  render();
+
+  try {
+    await saveState();
+
+    if (
+      typeof recordAuditEntry ===
+      "function"
+    ) {
+      await recordAuditEntry(
+        "event.results.completed",
+        summary,
+        {
+          event:
+            getEventAuditDetails(
+              event
+            )
+        }
+      );
+    }
+  } catch (error) {
+    Object.assign(
+      event,
+      previousEvent
+    );
+    render();
+    console.error(
+      "Event results could not be saved.",
+      error
+    );
+    alert(
+      error && error.message
+        ? error.message
+        : "Event results could not be saved."
+    );
+  }
+}
+
+async function saveTimeTrialResults(
+  eventId
+) {
+  const event =
+    getEventById(eventId);
+  const workspace =
+    document.querySelector(
+      `[data-event-workspace="${eventId}"]`
+    );
+
+  if (!event || !workspace) {
     return;
   }
 
-  createButton.addEventListener(
+  const rows = [
+    ...workspace.querySelectorAll(
+      "tr[data-team-id]"
+    )
+  ];
+  const results = [];
+
+  for (const row of rows) {
+    const minutes = Number(
+      row.querySelector(
+        ".time-minutes"
+      ).value
+    );
+    const seconds = Number(
+      row.querySelector(
+        ".time-seconds"
+      ).value
+    );
+    const milliseconds = Number(
+      row.querySelector(
+        ".time-milliseconds"
+      ).value
+    );
+
+    if (
+      !Number.isInteger(minutes) ||
+      minutes < 0 ||
+      !Number.isInteger(seconds) ||
+      seconds < 0 ||
+      seconds > 59 ||
+      !Number.isInteger(milliseconds) ||
+      milliseconds < 0 ||
+      milliseconds > 999
+    ) {
+      alert(
+        "Enter a valid time for every team."
+      );
+      return;
+    }
+
+    results.push({
+      teamId: row.dataset.teamId,
+      timeMilliseconds:
+        minutes * 60000 +
+        seconds * 1000 +
+        milliseconds
+    });
+  }
+
+  await persistEventResults(
+    event,
+    results,
+    "Completed Time Trial results."
+  );
+}
+
+async function saveGrandPrixResults(
+  eventId
+) {
+  const event =
+    getEventById(eventId);
+  const workspace =
+    document.querySelector(
+      `[data-event-workspace="${eventId}"]`
+    );
+
+  if (!event || !workspace) {
+    return;
+  }
+
+  const rows = [
+    ...workspace.querySelectorAll(
+      "tr[data-team-id]"
+    )
+  ];
+  const results = rows.map(row => ({
+    teamId: row.dataset.teamId,
+    finishPosition: Number(
+      row.querySelector(
+        ".finish-position"
+      ).value
+    )
+  }));
+  const positions = results.map(
+    result => result.finishPosition
+  );
+  const validPositions =
+    positions.every(
+      position =>
+        Number.isInteger(position) &&
+        position >= 1 &&
+        position <= rows.length
+    ) &&
+    new Set(positions).size ===
+      rows.length;
+
+  if (!validPositions) {
+    alert(
+      "Assign every team a unique finishing position."
+    );
+    return;
+  }
+
+  await persistEventResults(
+    event,
+    results,
+    "Completed Grand Prix results."
+  );
+}
+
+async function reopenEvent(eventId) {
+  const event =
+    getEventById(eventId);
+
+  if (!event) {
+    return;
+  }
+
+  event.completed = false;
+  event.updatedAt =
+    new Date().toISOString();
+  render();
+
+  try {
+    await saveState();
+  } catch (error) {
+    event.completed = true;
+    render();
+    alert(
+      error && error.message
+        ? error.message
+        : "The event could not be reopened."
+    );
+  }
+}
+
+function initialiseEventControls() {
+  document.addEventListener(
     "click",
-    createEvent
+    event => {
+      const target = event.target;
+      const isEventAction =
+        target.classList.contains(
+          "create-game-event"
+        ) ||
+        target.classList.contains(
+          "save-time-trial-results"
+        ) ||
+        target.classList.contains(
+          "save-grand-prix-results"
+        ) ||
+        target.classList.contains(
+          "reopen-game-event"
+        );
+
+      if (!isEventAction) {
+        return;
+      }
+
+      if (
+        typeof requireAdminForAction ===
+          "function" &&
+        !requireAdminForAction()
+      ) {
+        return;
+      }
+
+      if (
+        target.classList.contains(
+          "create-game-event"
+        )
+      ) {
+        createEvent(
+          target.dataset.gameId
+        );
+      } else if (
+        target.classList.contains(
+          "save-time-trial-results"
+        )
+      ) {
+        saveTimeTrialResults(
+          target.dataset.eventId
+        );
+      } else if (
+        target.classList.contains(
+          "save-grand-prix-results"
+        )
+      ) {
+        saveGrandPrixResults(
+          target.dataset.eventId
+        );
+      } else if (
+        target.classList.contains(
+          "reopen-game-event"
+        )
+      ) {
+        reopenEvent(
+          target.dataset.eventId
+        );
+      }
+    }
   );
 }
 

@@ -51,6 +51,19 @@ UI / workflows
 Tournament engines must not call the DOM, Firebase, alerts, or shared mutable
 state directly.
 
+## Game-centric operator workflow
+
+Each configured game receives its own navigation page. Mode-specific management
+is rendered on that page:
+
+- Swiss games own their round sequence, pairings, scores, and completion state.
+- Time Trial games own event creation, time entry, completion, and reopening.
+- Grand Prix games own event creation, finishing-order entry, completion, and
+  reopening.
+
+There are no separate global Schedule or Events workspaces. Shared standings,
+reports, and displays remain core-platform views.
+
 ## Incremental migration
 
 1. Protect current behavior with regression tests.
