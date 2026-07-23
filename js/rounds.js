@@ -444,7 +444,15 @@ async function generateRound() {
   }
 
   const round =
-    createSwissPairings();
+    window.PHDGameModes
+      .createNextRound(
+        window.PHDGameModes
+          .DEFAULT_MODE_ID,
+        {
+          state:
+            PHDTournament.state
+        }
+      );
 
   if (!round) {
     return;

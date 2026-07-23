@@ -72,6 +72,27 @@
     ];
   }
 
+  function createNextRound(
+    modeId,
+    context = {}
+  ) {
+    const mode = get(modeId);
+
+    if (
+      !mode ||
+      typeof mode.createNextRound !==
+        "function"
+    ) {
+      throw new Error(
+        `Game mode "${mode ? mode.id : modeId}" does not support round generation.`
+      );
+    }
+
+    return mode.createNextRound(
+      context
+    );
+  }
+
   function migrateGames(games) {
     if (!Array.isArray(games)) {
       return false;
@@ -262,7 +283,7 @@
       return "match-score";
     },
 
-    createNextRound() {
+    createNextRound(context) {
       if (
         typeof global
           .createSwissPairings !==
@@ -274,7 +295,9 @@
       }
 
       return global
-        .createSwissPairings();
+        .createSwissPairings(
+          context
+        );
     },
 
     calculateRankings() {
@@ -645,6 +668,8 @@
       getForGame,
 
       list,
+
+      createNextRound,
 
       migrateGames,
 

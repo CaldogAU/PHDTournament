@@ -65,3 +65,13 @@ Display Mode includes:
 Clearing browser data may delete locally saved tournaments.
 
 Always export a JSON backup before resetting, clearing browser storage, or moving devices.
+
+## Development
+
+Run the regression tests with:
+
+```text
+npm test
+```
+
+The tests use Node.js' built-in test runner and require no package installation.
