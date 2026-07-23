@@ -2,6 +2,7 @@
   "use strict";
 
   const DEFAULT_MODE_ID = "swiss";
+  const SDK_VERSION = "1.0.0";
   const modes = new Map();
 
   function normaliseModeId(modeId) {
@@ -18,16 +19,65 @@
     }
 
     const id = normaliseModeId(mode.id);
+    const displayName = String(
+      mode.displayName ||
+        mode.name ||
+        ""
+    ).trim();
 
-    if (!id || !mode.name) {
+    if (!id || !displayName) {
       throw new Error(
-        "Game modes require an id and name."
+        "Game modes require an id and displayName."
+      );
+    }
+
+    if (
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/
+        .test(id)
+    ) {
+      throw new Error(
+        `Game mode id "${id}" must use lowercase letters, numbers, and single hyphens.`
+      );
+    }
+
+    if (modes.has(id)) {
+      throw new Error(
+        `Game mode "${id}" is already registered.`
+      );
+    }
+
+    const version = String(
+      mode.version || "1.0.0"
+    ).trim();
+
+    const compatibilityVersion =
+      String(
+        mode.compatibilityVersion ||
+          SDK_VERSION
+      ).trim();
+
+    if (
+      !version ||
+      !compatibilityVersion
+    ) {
+      throw new Error(
+        `Game mode "${id}" requires version and compatibilityVersion metadata.`
+      );
+    }
+
+    if (
+      compatibilityVersion !==
+      SDK_VERSION
+    ) {
+      throw new Error(
+        `Game mode "${id}" targets SDK ${compatibilityVersion}; this platform supports SDK ${SDK_VERSION}.`
       );
     }
 
     const requiredMethods = [
       "getResultEntryType",
       "calculateRankings",
+      "calculateChampionshipPoints",
       "areResultsComplete",
       "shouldRevealResults"
     ];
@@ -45,7 +95,17 @@
 
     modes.set(id, {
       ...mode,
-      id
+      id,
+      name: displayName,
+      displayName,
+      description: String(
+        mode.description || ""
+      ),
+      icon: String(
+        mode.icon || ""
+      ),
+      version,
+      compatibilityVersion
     });
 
     return modes.get(id);
@@ -72,11 +132,32 @@
     ];
   }
 
+  function has(modeId) {
+    return modes.has(
+      normaliseModeId(modeId)
+    );
+  }
+
+  function getRequired(modeId) {
+    const id =
+      normaliseModeId(modeId);
+    const mode = modes.get(id);
+
+    if (!mode) {
+      throw new Error(
+        `Game mode "${id}" is not registered.`
+      );
+    }
+
+    return mode;
+  }
+
   function createNextRound(
     modeId,
     context = {}
   ) {
-    const mode = get(modeId);
+    const mode =
+      getRequired(modeId);
 
     if (
       !mode ||
@@ -253,9 +334,11 @@
 
       leaderboard:
         complete
-          ? awardChampionshipPoints(
-              positionedRankings
-            )
+          ? mode
+              .calculateChampionshipPoints(
+                positionedRankings,
+                context
+              )
           : positionedRankings,
 
       resultEntryType:
@@ -269,6 +352,13 @@
     id: "swiss",
 
     name: "Swiss",
+
+    icon: "trophy",
+
+    version: "1.0.0",
+
+    compatibilityVersion:
+      SDK_VERSION,
 
     description:
       "Round-based Swiss pairings with score entry.",
@@ -362,6 +452,14 @@
         }));
     },
 
+    calculateChampionshipPoints(
+      rankings
+    ) {
+      return awardChampionshipPoints(
+        rankings
+      );
+    },
+
     areResultsComplete(
       context
     ) {
@@ -391,6 +489,13 @@
     id: "time-trial",
 
     name: "Time Trial",
+
+    icon: "timer",
+
+    version: "1.0.0",
+
+    compatibilityVersion:
+      SDK_VERSION,
 
     description:
       "Each team submits a completion time; fastest wins.",
@@ -465,6 +570,14 @@
         );
     },
 
+    calculateChampionshipPoints(
+      rankings
+    ) {
+      return awardChampionshipPoints(
+        rankings
+      );
+    },
+
     areResultsComplete(
       context
     ) {
@@ -526,6 +639,13 @@
     id: "grand-prix",
 
     name: "Grand Prix",
+
+    icon: "flag",
+
+    version: "1.0.0",
+
+    compatibilityVersion:
+      SDK_VERSION,
 
     description:
       "Administrator enters the final finishing order.",
@@ -600,6 +720,14 @@
         );
     },
 
+    calculateChampionshipPoints(
+      rankings
+    ) {
+      return awardChampionshipPoints(
+        rankings
+      );
+    },
+
     areResultsComplete(
       context
     ) {
@@ -661,9 +789,15 @@
     Object.freeze({
       DEFAULT_MODE_ID,
 
+      SDK_VERSION,
+
       register,
 
       get,
+
+      has,
+
+      getRequired,
 
       getForGame,
 

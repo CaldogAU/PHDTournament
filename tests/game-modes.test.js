@@ -29,6 +29,11 @@ function loadGameModes(overrides = {}) {
 test("registers the supported game modes", () => {
   const gameModes = loadGameModes();
 
+  assert.equal(
+    gameModes.SDK_VERSION,
+    "1.0.0"
+  );
+
   assert.deepEqual(
     Array.from(
       gameModes.list(),
@@ -39,6 +44,190 @@ test("registers the supported game modes", () => {
       "time-trial",
       "grand-prix"
     ]
+  );
+
+  gameModes.list().forEach(mode => {
+    assert.equal(
+      mode.displayName,
+      mode.name
+    );
+    assert.equal(
+      typeof mode.icon,
+      "string"
+    );
+    assert.equal(
+      mode.version,
+      "1.0.0"
+    );
+    assert.equal(
+      mode.compatibilityVersion,
+      gameModes.SDK_VERSION
+    );
+  });
+});
+
+test("rejects plugins targeting an incompatible SDK", () => {
+  const gameModes = loadGameModes();
+
+  assert.throws(
+    () =>
+      gameModes.register({
+        id: "future-mode",
+        name: "Future Mode",
+        version: "1.0.0",
+        compatibilityVersion:
+          "2.0.0",
+        getResultEntryType() {
+          return "custom";
+        },
+        calculateRankings() {
+          return [];
+        },
+        calculateChampionshipPoints(
+          rankings
+        ) {
+          return rankings;
+        },
+        areResultsComplete() {
+          return false;
+        },
+        shouldRevealResults() {
+          return false;
+        }
+      }),
+    /targets SDK 2\.0\.0/
+  );
+});
+
+test("accepts displayName metadata and validates plugin IDs", () => {
+  const gameModes = loadGameModes();
+
+  const mode = gameModes.register({
+    id: "single-elimination",
+    displayName:
+      "Single Elimination",
+    description:
+      "Knockout bracket.",
+    icon: "bracket",
+    version: "1.0.0",
+    compatibilityVersion:
+      gameModes.SDK_VERSION,
+    getResultEntryType() {
+      return "match-score";
+    },
+    calculateRankings() {
+      return [];
+    },
+    calculateChampionshipPoints(
+      rankings
+    ) {
+      return rankings;
+    },
+    areResultsComplete() {
+      return false;
+    },
+    shouldRevealResults() {
+      return false;
+    }
+  });
+
+  assert.equal(
+    mode.name,
+    "Single Elimination"
+  );
+  assert.equal(
+    mode.icon,
+    "bracket"
+  );
+
+  assert.throws(
+    () =>
+      gameModes.register({
+        ...mode,
+        id: "invalid mode"
+      }),
+    /must use lowercase letters/
+  );
+});
+
+test("rejects duplicate and unknown mode dispatch", () => {
+  const gameModes = loadGameModes();
+  const swiss =
+    gameModes.getRequired("swiss");
+
+  assert.equal(
+    gameModes.has("swiss"),
+    true
+  );
+  assert.equal(
+    gameModes.has("unknown"),
+    false
+  );
+
+  assert.throws(
+    () =>
+      gameModes.register({
+        ...swiss
+      }),
+    /already registered/
+  );
+
+  assert.throws(
+    () =>
+      gameModes.createNextRound(
+        "unknown"
+      ),
+    /is not registered/
+  );
+});
+
+test("delegates championship points to the selected mode", () => {
+  const gameModes = loadGameModes();
+
+  gameModes.register({
+    id: "custom-points",
+    name: "Custom Points",
+    version: "1.0.0",
+    compatibilityVersion:
+      gameModes.SDK_VERSION,
+    getResultEntryType() {
+      return "custom";
+    },
+    calculateRankings() {
+      return [
+        {
+          teamId: "team-a",
+          rankValue: 10
+        }
+      ];
+    },
+    calculateChampionshipPoints(
+      rankings
+    ) {
+      return rankings.map(entry => ({
+        ...entry,
+        championshipPoints: 42
+      }));
+    },
+    areResultsComplete() {
+      return true;
+    },
+    shouldRevealResults() {
+      return true;
+    }
+  });
+
+  const result = gameModes.buildResult(
+    gameModes.getRequired(
+      "custom-points"
+    ),
+    {}
+  );
+
+  assert.equal(
+    result.leaderboard[0]
+      .championshipPoints,
+    42
   );
 });
 
