@@ -19,7 +19,9 @@ function getScoreDifference(standing) {
   return (standing.pointsFor || 0) - (standing.pointsAgainst || 0);
 }
 
-function getStandings() {
+function getStandings(
+  gameId = ""
+) {
   const standings = new Map();
 
   PHDTournament.state.teams.forEach(team => {
@@ -28,6 +30,13 @@ function getStandings() {
 
   PHDTournament.state.rounds.forEach(round => {
     round.matches.forEach(match => {
+      if (
+        gameId &&
+        match.gameId !== gameId
+      ) {
+        return;
+      }
+
       const teamA = standings.get(match.teamAId);
       const teamB = standings.get(match.teamBId);
 

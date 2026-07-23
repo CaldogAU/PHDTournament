@@ -171,8 +171,6 @@ function getStaticTabs() {
     "home",
     "admin",
     "games",
-    "schedule",
-    "events",
     "standings",
     "reports",
     "display"
@@ -214,6 +212,8 @@ function renderGameTabs() {
 
   panelContainer.innerHTML = games
     .map(game => {
+      const mode =
+        game.mode || "swiss";
       const matches =
         getMatchesForGame(game.id);
 
@@ -285,6 +285,15 @@ function renderGameTabs() {
             </div>
           `;
 
+      const managementHtml =
+        mode === "swiss"
+          ? renderSwissGameManagement(
+              game
+            )
+          : renderEventGameManagement(
+              game
+            );
+
       return `
         <section
           id="${getGameTabName(game)}Tab"
@@ -344,41 +353,44 @@ function renderGameTabs() {
               </div>
             </section>
 
-            <section class="card">
-              <h3>Total Matches</h3>
+            ${managementHtml}
 
-              <strong class="big-number">
-                ${matches.length}
-              </strong>
-            </section>
+            ${
+              mode === "swiss"
+                ? `
+                  <section class="card">
+                    <h3>Total Matches</h3>
+                    <strong class="big-number">
+                      ${matches.length}
+                    </strong>
+                  </section>
 
-            <section class="card">
-              <h3>Completed Matches</h3>
+                  <section class="card">
+                    <h3>Completed Matches</h3>
+                    <strong class="big-number">
+                      ${completedMatches.length}
+                    </strong>
+                  </section>
 
-              <strong class="big-number">
-                ${completedMatches.length}
-              </strong>
-            </section>
-
-            <section class="card wide">
-              <div class="section-heading">
-                <div>
-                  <h2>
-                    ${escapeHtml(game.name)}
-                    Matches
-                  </h2>
-
-                  <p class="muted">
-                    Matches assigned to this
-                    game from the rounds section.
-                  </p>
-                </div>
-              </div>
-
-              <div class="game-tab-match-list">
-                ${matchRows}
-              </div>
-            </section>
+                  <section class="card wide">
+                    <div class="section-heading">
+                      <div>
+                        <h2>
+                          ${escapeHtml(game.name)}
+                          Match Summary
+                        </h2>
+                        <p class="muted">
+                          Results from this game's Swiss rounds.
+                        </p>
+                      </div>
+                    </div>
+                    <div class="game-tab-match-list">
+                      ${matchRows}
+                    </div>
+                  </section>
+                `
+                : ""
+            }
           </div>
         </section>
       `;
@@ -403,8 +415,15 @@ if (
 ) {
   renderTeamPages();
 }
-renderRounds();
-renderEvents();
+getGames()
+  .filter(
+    game =>
+      (game.mode || "swiss") ===
+      "swiss"
+  )
+  .forEach(game => {
+    renderRounds(game.id);
+  });
 renderStandings();
   renderMatchHistory();
   renderRecentActivityTicker();
@@ -1045,112 +1064,76 @@ function bindTeamEvents() {
 }
 
 function bindRoundEvents() {
-  bindClick(
-    "generateRound",
-    () => {
+  document.addEventListener(
+    "click",
+    event => {
+      const target = event.target;
+
+      if (
+        !target.classList.contains(
+          "generate-game-round"
+        ) &&
+        !target.classList.contains(
+          "save-match"
+        ) &&
+        !target.classList.contains(
+          "clear-match"
+        ) &&
+        !target.classList.contains(
+          "toggle-round"
+        )
+      ) {
+        return;
+      }
+
       if (!requireAdminForAction()) {
         return;
       }
 
-      generateRound();
-    }
-  );
-
-  document.addEventListener(
-    "keydown",
-    event => {
       if (
-        event.ctrlKey &&
-        event.key.toLowerCase() ===
-          "backspace"
+        target.classList.contains(
+          "generate-game-round"
+        )
       ) {
-        if (
-          !requireAdminForAction()
-        ) {
-          return;
-        }
+        generateRound(
+          target.dataset.gameId
+        );
+        return;
+      }
 
-        event.preventDefault();
-        deleteLatestRound();
+      const roundId =
+        target.dataset.roundId;
+      const matchId =
+        target.dataset.matchId;
+
+      if (
+        target.classList.contains(
+          "save-match"
+        )
+      ) {
+        saveMatchScore(
+          roundId,
+          matchId,
+          target.closest(
+            ".match-card"
+          )
+        );
+      } else if (
+        target.classList.contains(
+          "clear-match"
+        )
+      ) {
+        clearMatchScore(
+          roundId,
+          matchId
+        );
+      } else {
+        toggleRoundCompleted(
+          roundId
+        );
       }
     }
   );
-
-  const roundsContainer =
-    getElement("roundsContainer");
-
-  if (roundsContainer) {
-    roundsContainer.addEventListener(
-      "click",
-      event => {
-        const roundId =
-          event.target.dataset.roundId;
-
-        const matchId =
-          event.target.dataset.matchId;
-
-        if (
-          event.target.classList.contains(
-            "save-match"
-          )
-        ) {
-          if (
-            !requireAdminForAction()
-          ) {
-            return;
-          }
-
-          const matchElement =
-            event.target.closest(
-              ".match-card"
-            );
-
-          saveMatchScore(
-            roundId,
-            matchId,
-            matchElement
-          );
-
-          return;
-        }
-
-        if (
-          event.target.classList.contains(
-            "clear-match"
-          )
-        ) {
-          if (
-            !requireAdminForAction()
-          ) {
-            return;
-          }
-
-          clearMatchScore(
-            roundId,
-            matchId
-          );
-
-          return;
-        }
-
-        if (
-          event.target.classList.contains(
-            "toggle-round"
-          )
-        ) {
-          if (
-            !requireAdminForAction()
-          ) {
-            return;
-          }
-
-          toggleRoundCompleted(
-            roundId
-          );
-        }
-      }
-    );
-  }
 }
 
 function bindDataToolEvents() {

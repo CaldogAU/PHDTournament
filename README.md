@@ -46,10 +46,12 @@ must sign in before changing shared data.
 1. Add tournament details.
 2. Add teams.
 3. Add up to five games and select a GameMode for each.
-4. Generate Swiss rounds or create a Time Trial/Grand Prix event.
-5. Enter and complete results.
-6. Review standings, reports, and the public display.
-7. Create restore points and export JSON regularly.
+4. Open the new game page in the sidebar.
+5. Generate Swiss rounds or create and manage the Time Trial/Grand Prix event
+   directly on that game page.
+6. Enter and complete results there.
+7. Review standings, reports, and the public display.
+8. Create restore points and export JSON regularly.
 
 ## Data storage
 

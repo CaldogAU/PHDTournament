@@ -289,9 +289,18 @@ async function deleteGame(gameId) {
         )
     );
 
-  if (isUsed) {
+  const hasEvent =
+    Array.isArray(
+      PHDTournament.state.events
+    ) &&
+    PHDTournament.state.events.some(
+      event =>
+        event.gameId === gameId
+    );
+
+  if (isUsed || hasEvent) {
     alert(
-      "This game is already used in one or more matches and cannot be deleted."
+      "This game already has tournament data and cannot be deleted."
     );
     return;
   }

@@ -98,6 +98,31 @@ test("pairs every team exactly once in an even field", () => {
   );
 });
 
+test("assigns generated rounds and matches to one game", () => {
+  const engine = loadSwissEngine();
+  const teams = [
+    createTeam("a"),
+    createTeam("b")
+  ];
+  const round =
+    engine.createRound({
+      teams,
+      standings: teams,
+      rounds: [],
+      gameId: "game-1",
+      ...createRoundFactory()
+    });
+
+  assert.equal(
+    round.gameId,
+    "game-1"
+  );
+  assert.equal(
+    round.matches[0].gameId,
+    "game-1"
+  );
+});
+
 test("avoids rematches when fresh opponents are available", () => {
   const engine = loadSwissEngine();
   const teams = [
